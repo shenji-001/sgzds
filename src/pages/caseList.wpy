@@ -1,0 +1,432 @@
+<style lang="less">
+  page{
+    background: #f5f5f5;
+    position: relative;
+  }
+  .login-footer{
+    position: absolute;
+    z-index: 2;
+    top: 85vh; /*偏移*/
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 518rpx;
+    height: 96rpx;
+    line-height:96rpx;
+    color: #fff;
+    font-size: 36rpx;
+    background: #2f54eb;
+    border-radius: 48rpx;
+    text-align: center;
+  }
+  .caseList{
+    height: 100%;
+    width: 100%;
+    overflow-y: scroll;
+  }
+  .caseList-head{
+    /*width: 100%;*/
+    position: fixed;
+    z-index: 11;
+    top: 0;
+    left: 0;
+    width: 92vw;
+    background: #fff;
+    height: 100rpx;
+    line-height:100rpx;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4vw;
+    .caseList-head-left{
+      display: flex;
+      align-items: center;
+    }
+    .caseList-head-right{
+      display: flex;
+      align-items: center;
+    }
+    .caseList-head-file{
+      width: 39.34rpx;
+      height: 44.96rpx;
+      margin-right: 16rpx;
+    }
+  }
+  .caseList-content-unload{
+    position: absolute;
+    top: 400rpx; /*偏移*/
+    left: 50%;
+    transform: translate(-50%, 0);
+  .content-unload{
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+  }
+    .caseList-content-img{
+      width: 176rpx;
+      height:174rpx;
+      margin-bottom: 30rpx;
+    }
+   }
+  .gay{
+    color: #999;
+  }
+  .caseList-content{
+    position: absolute;
+    top:120rpx;
+    padding-bottom: 200rpx;
+     margin: 34rpx 3% 0 3%;
+     width: 94%;
+     font-size:28rpx;
+    .caseList-content-item {
+      margin-bottom: 24rpx;
+      background: #fff;
+      padding: 36rpx 20rpx 36rpx 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      .content-item-left{
+
+      }
+      .content-item-right{
+        padding: 7rpx 15rpx;
+        color: #fff;
+        background: #2f54e8;
+        border-radius: 8rpx;
+      }
+      .row{
+        display: flex;
+        align-items: center;
+        padding-left: 36rpx;
+      }
+      .line1{
+        border-left:8rpx solid #2f54eb;
+        height: 38rpx;
+        line-height: 38rpx;
+        padding-top: 2rpx;
+        padding-left: 31rpx;
+        margin-bottom: 16rpx;
+      }
+      .w-12{
+        width: 114rpx;
+      }
+      .between{
+        display: flex;
+        justify-content: space-between;
+      }
+    }
+  }
+  .content-item-photo{
+    width: 174rpx;
+    height: 174rpx;
+    position: fixed;
+    right: 0;
+    bottom:188rpx;
+  }
+  .caseList-contennt{
+    position: fixed;
+    bottom:56rpx;
+    /*margin-top: 130rpx;*/
+    width: 94%;
+    display:flex;
+    font-size: 36rpx;
+    justify-content: space-between;
+    .caseList-contennt-left{
+      width: 322rpx;
+      background: #fff;
+      height: 100rpx;
+      color: #2f54eb;
+      line-height: 100rpx;
+      text-align: center;
+      border-radius: 8rpx;
+      border: 2rpx solid rgba(47, 84, 235, 1);
+    }
+    .caseList-contennt-left1{
+      width: 100%;
+      background: #fff;
+      height: 100rpx;
+      color: #2f54eb;
+      line-height: 100rpx;
+      text-align: center;
+      border-radius: 8rpx;
+      border: 2rpx solid rgba(47, 84, 235, 1);
+    }
+    .caseList-contennt-right{
+      width: 322rpx;
+      height: 100rpx;
+      line-height: 100rpx;
+      text-align: center;
+      border-radius: 8rpx;
+      background: #2f54eb;
+      color: #fff;
+    }
+  }
+  .content-right-image{
+    width: 32rpx;
+    height: 32rpx;
+  }
+</style>
+<template>
+  <view class="caseList">
+    <view class="caseList-head">
+      <view class="caseList-head-left">
+        <view style="margin-right: 48rpx" class="{{ hisShow ? 'gay':'' }}" @tap="sesssin">当前案件</view>
+        <view class="{{ !hisShow ? 'gay':'' }}" @tap="historyCase">历史案件</view>
+      </view>
+      <view class="caseList-head-right">
+        <image class="caseList-head-file" src="../assert/images/file.png"></image>
+        <view>流程说明</view>
+      </view>
+    </view>
+    <view class="caseList-content" wx:if="{{isLoad && !hisShow}}">
+      <view class="caseList-content-item" wx:if="{{caseList.length}}" wx:for="{{caseList}}" data-index ='{{index}}' wx:key='index'>
+        <view class="content-item-left" @tap="toShowMetarical({{item}})">
+          <view class="row line1">
+            <view class="gay w-12">案件号： </view>
+            <view>{{item.registNo}}</view>
+          </view>
+          <view class="row">
+            <view class="gay w-12 between">
+              <view>时</view>
+              <view>间：</view></view>
+            <view>{{item.createdOn}}</view>
+          </view>
+        </view>
+        <view class="content-item-right" wx:if="{{item.type !== 6}}">{{item.name}}</view>
+        <view class="content-item-right" @tap="toUplad({{caseList[0]}})" wx:if="{{item.type === 6}}" >{{item.name}}</view>
+      </view>
+      <image class="content-item-photo" wx:if="{{caseList.length}}" src="../assert/images/photo.png" @tap="upload({{caseList[0]}})"></image>
+      <view class="caseList-contennt" wx:if="{{caseList.length}}">
+        <view class="caseList-contennt-left" @tap="back">退出登陆</view>
+        <view class="caseList-contennt-right" @tap="toVideo({{caseList[0]}})">连接坐席</view>
+      </view>
+      <view class="caseList-content-unload" wx:if="{{!caseList.length}}">
+        <view class="content-unload">
+          <image class="caseList-content-img" src="../assert/images/unload.png"></image>
+          <view class="gay">当前无信息</view>
+        </view>
+      </view>
+      <view class="caseList-contennt" wx:if="{{!caseList.length}}">
+        <view class="caseList-contennt-left1" @tap="back">退出登陆</view>
+      </view>
+    </view>
+    <view class="caseList-content" wx:if="{{isLoad && hisShow}}">
+      <view class="caseList-content-item" @tap="toMetaricalDetail({{item}})" wx:for="{{casesList}}" data-index ='{{index}}' wx:key='index'>
+        <view class="content-item-left">
+          <view class="row line1">
+            <view class="gay w-12">案件号： </view>
+            <view>{{item.registNo}}</view>
+          </view>
+          <view class="row">
+            <view class="gay w-12 between">
+              <view>时</view>
+              <view>间：</view></view>
+            <view>{{item.createdOn}}</view>
+          </view>
+        </view>
+        <image class="content-right-image" src="../assert/images/right.png"></image>
+      </view>
+    </view>
+    <view class="caseList-content-unload" wx:if="{{!isLoad}}">
+      <view class="content-unload">
+        <image class="caseList-content-img" src="../assert/images/unload.png"></image>
+        <view class="gay">登陆后查看更多信息</view>
+      </view>
+    </view>
+    <view class="login-footer" wx:if="{{!isLoad}}" @tap="login">登陆</view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  import testMixin from '../mixins/test'
+  import {asyncsession, asyncElevevi, asyncCases, asyncServerInfo, asyncUploads} from '../store/actions'
+
+  @connect({
+    isLoad (state) {
+      return state.loginPhone.token
+    },
+    server (state) {
+      return state.serverinfo.serverinfo
+    }
+  }, {
+    sessionIn: asyncsession,
+    getElevevi: asyncElevevi,
+    asyncCases: asyncCases,
+    getserverinfo: asyncServerInfo,
+    uploads: asyncUploads
+  })
+
+  export default class caseList extends wepy.page {
+    config = {
+      navigationBarTitleText: '太平智定损'
+    }
+    components = {
+    }
+
+    mixins = [testMixin]
+
+    data = {
+      mynum: 20,
+      hisShow: false,
+      casesList: [],
+      caseList: [],
+      socket: ''
+    }
+
+    computed = {
+    }
+
+    methods = {
+      toUplad(item) {
+        let url = 'upload?caseid=' + item.caseId
+        wx.navigateTo({
+          url: url
+        })
+      },
+      login() {
+        wx.navigateTo({
+          url: 'login'
+        })
+      },
+      toVideo(item) {
+        wx.navigateTo({
+          url: 'video?caseid=' + item.caseId
+        })
+      },
+      toMetaricalDetail(item) {
+        console.log(item)
+        let url = 'metaricalDetail?caseid=' + item.id
+        wx.navigateTo({
+          url: url
+        })
+      },
+      toShowMetarical(item) {
+        let path = item.attachmentPath || item.clientSignature
+        let url = this.server.fileSiteUrl + '/' + path
+        wx.previewImage({
+          current: url, // 当前显示图片的http链接
+          urls: [url] // 需要预览的图片http链接列表
+        })
+      },
+      back() {
+        wx.navigateBack()
+      },
+      historyCase() {
+        this.hisShow = true
+        let that = this
+        this.methods.getCasesList().then(res => {
+          that.casesList = that.methods.getTime(res, 'reportTime')
+          that.$apply()
+        })
+      },
+      upload(val) {
+        let that = this
+        wx.chooseImage({
+          count: 1,
+          sizeType: ['original', 'compressed'],
+          sourceType: ['album', 'camera'],
+          success (res) {
+            let data = {
+              picpath: res.tempFilePaths[0],
+              categoryId: 0
+            }
+            let id = val.caseId
+            that.methods.postuploads(id, data).then(res => {
+              if (res.attachmentPath) {
+                wx.showToast({
+                  title: '上传成功',
+                  icon: 'success',
+                  duration: 2000
+                })
+              }
+            })
+          }
+        })
+      },
+      sesssin() {
+        this.hisShow = false
+        this.methods.sessin1()
+      },
+      async sessin1(val) {
+        this.hisShow = false
+        let a = await this.sessionIn()
+        if (a.payload.caseId) {
+          console.log(this)
+          this.getcase(a.payload.caseId)
+        }
+      },
+      async getCaseList(val) {
+        this.hisShow = false
+        let a = await this.sessionIn()
+        if (a.payload.caseId) {
+          console.log(this)
+          this.getcase(a.payload.caseId)
+        }
+      },
+      async getCasesList(val) {
+        this.hisShow = false
+        let a = await this.asyncCases()
+        if (a.payload) {
+          return a.payload
+        }
+      },
+      // 获取当前案件资料列表
+      async getcase(val) {
+        let a = await this.getElevevi(val)
+        if (a.payload) {
+          return a.payload
+        } else {
+          return []
+        }
+      },
+      async getServerInfo(val) {
+        let a = await this.getserverinfo(val)
+        if (a.payload) {
+          console.log(a)
+        }
+      },
+      async postuploads(id, val) {
+        let a = await this.uploads(id, val)
+        if (a.payload) {
+          console.log(a)
+          debugger
+          return a.payload
+        } else {
+          return []
+        }
+      },
+      getTime(val, type) {
+        if (val) {
+          let value = val
+          value.forEach(item => {
+            let time = new Date(item[type] || item.createdOn)
+            let year = time.getFullYear()
+            let mouth = time.getMonth() - 1
+            let day = time.getDate()
+            let hour = time.getHours()
+            let second = time.getSeconds()
+            let mun = time.getMinutes()
+            let date = `${year}-${mouth}-${day} ${hour}:${mun}:${second}`
+            item.createdOn = date
+          })
+          return value
+        } else {
+          return []
+        }
+      }
+    }
+    onShow() {
+      this.methods.getcase().then(res => {
+        if (res && !res.statusCode) {
+          this.caseList = this.methods.getTime(res)
+          this.$apply()
+        }
+      })
+    }
+    onLoad() {
+      console.log(this)
+      this.methods.getServerInfo()
+    }
+  }
+</script>

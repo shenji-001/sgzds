@@ -1,0 +1,350 @@
+<style lang="less">
+  .upload{
+    /*padding: 0 ;*/
+  }
+  .upload-head{
+    display: flex;
+    width: 120vw;
+    overflow-x: scroll;
+    padding-left: 19rpx;
+    margin-top:36rpx;
+    .upload-head{
+
+    }
+    .upload-head-item{
+      position:relative;
+      width: 203rpx;
+      height: 253rpx;
+    }
+    .upload-head1{
+      position: absolute;
+      top:12rpx;
+      left:27rpx;
+      width: 28rpx;
+      z-index: 11;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 16rpx;
+      padding: 4rpx 2rpx 20rpx 2rpx;
+      color: #bbb;
+      .z-11{
+        z-index: 11;
+      }
+      .upload-head1-bg{
+        position: absolute;
+        z-index: 8;
+        width: 28rpx;
+        top:-1rpx;
+        left:2rpx;
+        height: 84rpx;
+      }
+    }
+    image{
+      width: 213rpx;
+      height: 253rpx;
+      /*margin-right: 16rpx;*/
+    }
+  }
+  .tips{
+    display: flex;
+    align-items: center;
+    margin-top:35rpx;
+    font-size: 32rpx;
+    padding-left: 28rpx;
+    span{
+      width: 36rpx;
+      height: 36rpx;
+      background: #2f54e8;
+      color: #fff;
+      position:relative;
+      border-radius: 50%;
+      display: inline-block;
+      margin-left: 12rpx;
+      .tips-icon{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 11;
+      }
+      .tips-icon-img{
+        position: absolute;
+        top: -148rpx;
+        left: 190%;
+        width: 247.16rpx;
+        height: 156rpx;
+      }
+    }
+  }
+  .upload-content{
+    position:relative;
+    height: 402rpx;
+    width:92vw;
+    margin:36rpx 4vw;
+    background: #efefef;
+    border:2rpx solid #b2b2b2;
+    border-radius:16rpx;
+    .upload-content-center{
+      position: absolute;
+      top:50%;
+      left:50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #999;
+    }
+    .content-center-img{
+      width: 98.93rpx;
+      height: 79.16rpx;
+      margin-bottom: 15rpx;
+    }
+  }
+  .caseList-contennt{
+    position: absolute;
+    bottom:56rpx;
+    width: 92vw;
+    display:flex;
+    margin-left: 4vw;
+    font-size: 36rpx;
+    justify-content: space-between;
+    .caseList-contennt-left{
+      width: 322rpx;
+      background: #fff;
+      height: 100rpx;
+      color: #2f54eb;
+      line-height: 100rpx;
+      text-align: center;
+      border-radius: 8rpx;
+      border: 2rpx solid rgba(47, 84, 235, 1);
+    }
+    .caseList-contennt-right{
+      width: 322rpx;
+      height: 100rpx;
+      line-height: 100rpx;
+      text-align: center;
+      border-radius: 8rpx;
+      background: #2f54eb;
+      color: #fff;
+    }
+  }
+  .blue{
+    color: #869aec
+  }
+  .green{
+    color:#16e294
+  }
+  .orange{
+    color: #efb66d;
+  }
+  .gray{
+    color: #9c9ad1;
+  }
+  /*.border-blue{*/
+    /*border: 1px solid #869aec;*/
+  /*}*/
+  /*.border-green{*/
+    /*border: 1px solid #16e294;*/
+  /*}*/
+  /*.border-orange{*/
+    /*border: 1px solid #869aec;*/
+  /*}*/
+  /*.border-gray{*/
+    /*border: 1px solid #869aec;*/
+  /*}*/
+</style>
+<template>
+  <view class="upload">
+    <view class="upload-head">
+      <view class="upload-head-item" data-index ='{{index}}' @tap="changeChoose({{$event}})" wx:for="{{chooseList}}" wx:key="index">
+        <image src='{{item.src}}'></image>
+        <view class="upload-head1" wx:if="{{item.show}}">
+          <view class="z-11">未</view>
+          <view class="z-11">上</view>
+          <view class="z-11">传</view>
+          <image class="upload-head1-bg" src='../assert/images/update-bg.png'></image>
+        </view>
+        <view class="upload-head1" wx:if="{{!item.show}}">
+          <view class="z-11 {{item.color}}">已</view>
+          <view class="z-11 {{item.color}}">上</view>
+          <view class="z-11 {{item.color}}">传</view>
+          <image class="upload-head1-bg" src='../assert/images/update-bg.png'></image>
+        </view>
+      </view>
+    </view>
+    <view class="tips">示例图
+      <span>
+        <view class="tips-icon" @tap="changeTips">!
+          <image wx:if="{{tipsShow}}" class="tips-icon-img" src="../assert/images/login-bg.png"></image>
+        </view>
+      </span>
+    </view>
+    <view class="upload-content" @tap="choose">
+      <view class="upload-content-center">
+        <image class="content-center-img" src="../assert/images/photo-gay.png"></image>
+        <view>点此上传</view>
+      </view>
+    </view>
+    <view class="caseList-contennt">
+      <view class="caseList-contennt-left">重新上传</view>
+      <view class="caseList-contennt-right">确认</view>
+    </view>
+    <!--<form bindsubmit="formSubmit">-->
+      <!--<view class="section">-->
+        <!--<input type="file" name="input"/>-->
+      <!--</view>-->
+      <!--<view class="btn-area">-->
+        <!--<button formType="submit">Submit</button>-->
+      <!--</view>-->
+    <!--</form>-->
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  import { asyncUpload, asyncUploads } from '../store/actions'
+  import testMixin from '../mixins/test'
+
+  @connect({
+    num (state) {
+      return state.counter.num
+    }
+  }, {
+    upload: asyncUpload,
+    uploads: asyncUploads
+  })
+  export default class BaseMban extends wepy.page {
+    config = {
+      navigationBarTitleText: '太平智定损'
+    }
+    components = {
+    }
+    mixins = [testMixin]
+
+    data = {
+      mynum: 20,
+      caseid: '',
+      tipsShow: false,
+      chooseList: [{
+        type: 0,
+        src: '../assert/images/update1.png',
+        color: 'blue',
+        show: false
+      }, {
+        type: 1,
+        src: '../assert/images/update2.png',
+        color: 'green',
+        show: false
+      }, {
+        type: 2,
+        src: '../assert/images/update3.png',
+        color: 'orange',
+        show: false
+      }, {
+        type: 3,
+        src: '../assert/images/update4.png',
+        color: 'gray',
+        show: false
+      }]
+    }
+
+    computed = {
+    }
+    methods = {
+      formSubmit: function (e) {
+        console.log('form发生了submit事件，携带数据为：', e.detail.value)
+      },
+      changeTips() {
+        this.tipsShow = !this.tipsShow
+      },
+      changeChoose(e) {
+        this.chooseList.forEach((item, index) => {
+          item.show = e.currentTarget.dataset.index === index
+        })
+        console.log(this.chooseList)
+        this.$apply();
+      },
+      choose() {
+        let that = this
+        wx.chooseImage({
+          count: 1,
+          sizeType: ['original', 'compressed'],
+          sourceType: ['album', 'camera'],
+          success (res) {
+            const tempFilePaths = res.tempFilePaths
+            wx.uploadFile({
+              url: 'https://app-in-zds-internal.yhulian.cn/api/upload',
+              // url: 'http://192.168.16.107:80/api/upload',
+              filePath: tempFilePaths[0],
+              name: 'file',
+              header: {
+                'Authorization': 'Bearer ' + that.$parent.globalData.token
+              },
+              formData: {
+                'file': tempFilePaths[0]
+              },
+              success (res) {
+                if (res && res.data) {
+                  let a = JSON.parse(res.data)
+                  that.methods.postuploads(that.caseid, a.path).then(res => {
+                    if (res.attachmentPath) {
+                      wx.showToast({
+                        title: '上传成功',
+                        icon: 'none',
+                        duration: 1500
+                      })
+                    }
+                  })
+                } else {
+                  wx.showToast({
+                    title: '上传失败',
+                    icon: 'none',
+                    duration: 1500
+                  })
+                }
+              },
+              fail(e) {
+                wx.showToast({
+                  title: '上传失败',
+                  icon: 'none',
+                  duration: 1500
+                })
+              }
+            })
+          }
+        })
+      },
+      async postupload(val) {
+        let a = await this.upload(val)
+        if (a.payload) {
+          return a.payload
+        } else {
+          return []
+        }
+      },
+      async postuploads(caseid, val) {
+        let data = {
+          categoryId: '0',
+          picpath: val
+        }
+        console.log(this.caseid)
+        debugger
+        let a = await this.uploads(caseid, data)
+        if (a.payload) {
+          return a.payload
+        } else {
+          return []
+        }
+      }
+    }
+
+    events = {
+    }
+
+    onLoad(option) {
+      this.caseid = option.caseid
+    }
+  }
+</script>

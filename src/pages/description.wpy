@@ -1,0 +1,48 @@
+<style lang="less">
+</style>
+<template>
+  <view>
+    <view>
+      <image src='../assert/images/login'></image>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  import testMixin from '../mixins/test'
+
+  @connect({
+    num (state) {
+      return state.counter.num
+    },
+  })
+
+  export default class BaseMban extends wepy.page {
+    config = {
+      navigationBarTitleText: '太平智定损'
+    }
+    components = {
+    }
+
+    mixins = [testMixin]
+
+    data = {
+      mynum: 20
+    }
+
+    computed = {
+    }
+
+    methods = {
+    }
+
+    events = {
+    }
+
+    onLoad() {
+      console.log(this.$parent)
+    }
+  }
+</script>

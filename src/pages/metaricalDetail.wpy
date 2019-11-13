@@ -1,0 +1,179 @@
+<style lang="less">
+  .metaricalDetail {
+    .caseList-content {
+      position: absolute;
+      top: 20rpx;
+      padding-bottom: 200rpx;
+      margin: 34rpx 3% 0 3%;
+      width: 94%;
+      font-size: 28rpx;
+    }
+    .caseList-content-item {
+      margin-bottom: 24rpx;
+      background: #fff;
+      padding: 36rpx 20rpx 36rpx 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .content-item-right{
+      padding: 7rpx 15rpx;
+      color: #fff;
+      background: #2f54e8;
+      border-radius: 8rpx;
+    }
+    .row{
+      display: flex;
+      align-items: center;
+      padding-left: 36rpx;
+    }
+    .line1{
+      border-left:8rpx solid #2f54eb;
+      height: 38rpx;
+      line-height: 38rpx;
+      padding-top: 2rpx;
+      padding-left: 31rpx;
+      margin-bottom: 16rpx;
+    }
+    .w-12{
+      width: 114rpx;
+    }
+    .between{
+      display: flex;
+      justify-content: space-between;
+    }
+    .caseList-content-unload {
+      position: absolute;
+      top: 400rpx; /*偏移*/
+      left: 50%;
+      transform: translate(-50%, 0);
+    }
+    .content-unload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .caseList-content-img {
+      width: 176rpx;
+      height: 174rpx;
+      margin-bottom: 30rpx;
+    }
+    .gay {
+      color: #999;
+    }
+  }
+</style>
+<template>
+  <view class="metaricalDetail">
+    <view class="caseList-content" wx:if="{{caseList.length}}">
+      <view class="caseList-content-item" @tap="showMetarical({{item}})" wx:for="{{caseList}}" data-index ='{{index}}' wx:key='index'>
+        <view class="content-item-left">
+          <view class="row line1">
+            <view class="gay w-12">案件号： </view>
+            <view>{{item.registNo}}</view>
+          </view>
+          <view class="row">
+            <view class="gay w-12 between">
+              <view>时</view>
+              <view>间：</view></view>
+            <view>{{item.createdOn}}</view>
+          </view>
+        </view>
+        <view class="content-item-right" wx:if="{{!item.attachmentPath}}">{{item.name}}</view>
+        <view class="content-item-right" wx:if="{{item.attachmentPath}}">补传单证</view>
+      </view>
+    </view>
+    <view class="caseList-content-unload" wx:if="{{!caseList.length}}">
+      <view class="content-unload">
+        <image class="caseList-content-img" src="../assert/images/unload.png"></image>
+        <view class="gay">无更多信息</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  import {asyncElevevi} from '../store/actions'
+  import testMixin from '../mixins/test'
+
+  @connect({
+    num (state) {
+      return state.counter.num
+    },
+    server (state) {
+      return state.serverinfo.serverinfo
+    }
+  }, {
+    getElevevi: asyncElevevi
+  })
+
+  export default class MetaricalDetail extends wepy.page {
+    config = {
+      navigationBarTitleText: '太平智定损'
+    }
+    components = {
+    }
+
+    mixins = [testMixin]
+
+    data = {
+      mynum: 20,
+      caseList: []
+    }
+
+    computed = {
+    }
+
+    methods = {
+      showMetarical(item) {
+        let path = item.attachmentPath || item.clientSignature
+        let url = this.server.fileSiteUrl + '/' + path
+        // let url = this.server.fileSiteUrl + '/file/' + path
+        wx.previewImage({
+          current: url, // 当前显示图片的http链接
+          urls: [url] // 需要预览的图片http链接列表
+        })
+      },
+      // 获取当前案件资料列表
+      async getcase(val) {
+        let a = await this.getElevevi(val)
+        if (a.payload) {
+          return a.payload
+        } else {
+          return []
+        }
+      },
+      getTime(val, type) {
+        let value = val
+        value.forEach(item => {
+          let time = new Date(item[type] || item.createdOn)
+          let year = time.getFullYear()
+          let mouth = time.getMonth() - 1
+          let day = time.getDate()
+          let hour = time.getHours()
+          let second = time.getSeconds()
+          let mun = time.getMinutes()
+          let date = `${year}-${mouth}-${day} ${hour}:${mun}:${second}`
+          item.createdOn = date
+        })
+        return value
+      }
+    }
+
+    events = {
+    }
+
+    onLoad(option) {
+      let that = this
+      if (option.caseid) {
+        this.methods.getcase(option.caseid).then(res => {
+          console.log(res)
+          that.caseList = that.methods.getTime(res)
+          that.$apply()
+        })
+      }
+    }
+  }
+</script>

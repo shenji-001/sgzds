@@ -1,0 +1,196 @@
+<style lang="less">
+.login {
+  .login-head{
+    position: relative;
+  }
+  .login-head-bg{
+    width:100%;
+  }
+  .login-head-bg-bg{
+    position: absolute;
+    top: 100%; /*偏移*/
+    left: 50%;
+    background: #fff;
+    transform: translate(-50%, -50%);
+    width: 140rpx;
+    z-index: 1;
+    height: 140rpx;
+    border-radius: 8rpx;
+    box-shadow: 0 4rpx 16rpx rgba(47, 116, 235, 0.21);
+  }
+  .placeclass{
+    color: #e5e5e5;
+  }
+  .login-head-log{
+    position: absolute;
+    z-index: 2;
+    top: 50%; /*偏移*/
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 102rpx;
+    height: 102rpx;
+  }
+  .login-footer{
+    position: absolute;
+    z-index: 2;
+    bottom: 114rpx; /*偏移*/
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 518rpx;
+    height: 96rpx;
+    line-height:96rpx;
+    color: #fff;
+    font-size: 36rpx;
+    background: #2f54eb;
+    border-radius: 48rpx;
+    text-align: center;
+  }
+  .login-content2{
+    position: absolute;
+    z-index: 2;
+    padding: 24rpx 82rpx;
+    width: 418rpx;
+    top: 55%;
+    left: 50%;
+    border:2rpx solid #e5e5e5;
+    border-radius: 8rpx;
+    transform: translate(-50%, 0);
+  }
+  .login-content1{
+    position: absolute;
+    z-index: 2;
+    width: 430rpx;
+    top: 51%; /*偏移*/
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+  .login-content1-item{
+    display: flex;
+    padding-bottom: 24rpx;
+    margin-top: 50rpx;
+    align-items: center;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .icon{
+    width: 40rpx;
+    height:40rpx;
+    margin-right: 64rpx;
+  }
+}
+</style>
+<template>
+  <view class='login'>
+    <view class='login-head'>
+      <image class='login-head-bg' src='../assert/images/login-bg.png'></image>
+      <div class="login-head-bg-bg">
+        <image class='login-head-log' src='../assert/images/login-log.png'></image>
+      </div>
+    </view>
+    <!--<view class="login-content1" wx:if="{{changeShow}}">-->
+      <!--<view class="login-content1-item">-->
+        <!--<image class="icon" src="../assert/images/login-user.png"></image>-->
+        <!--<input type="text" placeholder-class="placeclass" @input="inputSome('user')" placeholder="请输入账号">-->
+      <!--</view>-->
+      <!--<view class="login-content1-item">-->
+        <!--<image class="icon" src="../assert/images/login-password.png"></image>-->
+        <!--<input type="text" placeholder-class="placeclass" @input="inputSome('password')" placeholder="请输入密码" password>-->
+      <!--</view>-->
+    <!--</view>-->
+    <view class="login-content2" wx:if="{{!changeShow}}">
+      <input type="text" placeholder-class="placeclass" @input="inputSome('inputinfo')" placeholder="请输入手机号">
+    </view>
+    <view class="login-footer" @tap="login">登陆</view>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  // import {asynclogin} from '../store/actions'
+  import {asynclogin, asyncloginphone} from '../store/actions'
+  import { SAVE_TOKEN } from '../store/types'
+
+  import testMixin from '../mixins/test'
+
+  @connect({
+    token (state) {
+      return state.loginPhone.token || state.login.token
+    }
+  }, {
+    asynlogin: asynclogin,
+    asynloginphone: asyncloginphone,
+    SAVE_TOKEN
+  })
+  export default class BaseMban extends wepy.page {
+    config = {
+      navigationBarTitleText: '登陆'
+    }
+    components = {
+    }
+
+    mixins = [testMixin]
+
+    data = {
+      mynum: 20,
+      changeShow: false,
+      user: '',
+      password: '',
+      inputinfo: ''
+    }
+
+    computed = {
+      now () {
+        return +new Date()
+      }
+    }
+    methods = {
+      login() {
+        this.login2(this.inputinfo)
+      },
+      inputSome(type, e) {
+        this[type] = e.detail.value
+        this.$apply()
+      },
+      toNext() {
+        wx.navigateTo({
+          url: 'caseList'
+        })
+      }
+    }
+    async login1(val) {
+      try {
+        let a = await this.methods.asynlogin(val)
+        if (a.payload.token) {
+          this.methods.toNext()
+        } else {
+          wx.showToast('登陆失败，请确认案件号或手机号码是否正确')
+        }
+      } catch (e) {
+        wx.showToast('登陆失败，请确认案件号或手机号码是否正确')
+      }
+    }
+    async login2(val) {
+      try {
+        let a = await this.methods.asynloginphone(val)
+        if (a.payload.token) {
+          this.methods.toNext()
+        } else {
+          wx.showToast({
+            title: '登陆失败，请确认手机号是否正确',
+            icon: 'none',
+            duration: 1500
+          })
+          // wx.showToast('登陆失败，请确认案件号或手机号码是否正确')
+        }
+      } catch (e) {
+        wx.showToast({
+          title: '登陆失败，请确认手机号是否正确',
+          icon: 'none',
+          duration: 1500
+        })
+      }
+    }
+    onLoad() {
+    }
+  }
+</script>

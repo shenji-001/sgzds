@@ -1,0 +1,51 @@
+<style lang="less">
+  .showMetarical-image{
+    width: 100vw;
+  }
+</style>
+<template>
+  <view class="showMetarical">
+    <image class="showMetarical-image" src='{{src}}'></image>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import { connect } from 'wepy-redux'
+  import testMixin from '../mixins/test'
+
+  @connect({
+    num (state) {
+      return state.counter.num
+    }
+  })
+
+  export default class ShowMetarical extends wepy.page {
+    config = {
+      navigationBarTitleText: '太平智定损'
+    }
+    components = {
+    }
+
+    mixins = [testMixin]
+
+    data = {
+      mynum: 20,
+      src: ''
+    }
+
+    computed = {
+    }
+
+    methods = {
+    }
+
+    events = {
+    }
+
+    onLoad(option) {
+      this.src = option.file
+      console.log(this.$parent)
+    }
+  }
+</script>
