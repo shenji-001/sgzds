@@ -1,0 +1,30 @@
+<style lang="less">
+</style>
+<template>
+  <web-view src='{{src}}'></web-view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+
+  export default class H5Conteiner extends wepy.page {
+    config = {
+      navigationBarTitleText: '流程说明'
+    }
+    components = {
+    }
+
+    data = {
+      src: ''
+    }
+
+    computed = {
+    }
+    methods = {
+    }
+    onLoad(option) {
+      this.src = decodeURIComponent(option.src);
+      this.$apply();
+    }
+  }
+</script>

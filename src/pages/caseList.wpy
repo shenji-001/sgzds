@@ -4,9 +4,9 @@
     position: relative;
   }
   .login-footer{
-    position: absolute;
+    position: fixed;
     z-index: 2;
-    top: 85vh; /*偏移*/
+    bottom: 114rpx; /*偏移*/
     left: 50%;
     transform: translate(-50%, 0);
     width: 518rpx;
@@ -21,13 +21,14 @@
   .caseList{
     height: 100%;
     width: 100%;
+    margin-top: 80px;
     overflow-y: scroll;
   }
   .caseList-head{
     /*width: 100%;*/
     position: fixed;
     z-index: 11;
-    top: 0;
+    top: 1;
     left: 0;
     width: 92vw;
     background: #fff;
@@ -106,6 +107,13 @@
         padding-left: 31rpx;
         margin-bottom: 16rpx;
       }
+      .line2{
+        border-left:8rpx solid #2f54eb;
+        height: 38rpx;
+        line-height: 38rpx;
+        padding-top: 2rpx;
+        padding-left: 31rpx;
+      }
       .w-12{
         width: 114rpx;
       }
@@ -124,7 +132,7 @@
   }
   .caseList-contennt{
     position: fixed;
-    bottom:56rpx;
+    bottom:106rpx;
     /*margin-top: 130rpx;*/
     width: 94%;
     display:flex;
@@ -167,6 +175,7 @@
 </style>
 <template>
   <view class="caseList">
+     <head></head>
     <view class="caseList-head">
       <view class="caseList-head-left">
         <view style="margin-right: 48rpx" class="{{ hisShow ? 'gay':'' }}" @tap="sesssin">当前案件</view>
@@ -174,12 +183,12 @@
       </view>
       <view class="caseList-head-right">
         <image class="caseList-head-file" src="../assert/images/file.png"></image>
-        <view>流程说明</view>
+        <view @tap='toH5'>流程说明</view>
       </view>
     </view>
     <view class="caseList-content" wx:if="{{isLoad && !hisShow}}">
-      <view class="caseList-content-item" wx:if="{{caseList.length}}" wx:for="{{caseList}}" data-index ='{{index}}' wx:key='index'>
-        <view class="content-item-left" @tap="toShowMetarical({{item}})">
+      <view class="caseList-content-item" @tap="toShowMetarical({{item}})" wx:if="{{caseList.length}}" wx:for="{{caseList}}" data-index ='{{index}}' wx:key='index'>
+        <view class="content-item-left">
           <view class="row line1">
             <view class="gay w-12">案件号： </view>
             <view>{{item.registNo}}</view>
@@ -191,22 +200,27 @@
             <view>{{item.createdOn}}</view>
           </view>
         </view>
-        <view class="content-item-right" wx:if="{{item.type !== 6}}">{{item.name}}</view>
-        <view class="content-item-right" @tap="toUplad({{caseList[0]}})" wx:if="{{item.type === 6}}" >{{item.name}}</view>
+        <view class="content-item-right">{{item.name}}</view>
       </view>
-      <image class="content-item-photo" wx:if="{{caseList.length}}" src="../assert/images/photo.png" @tap="upload({{caseList[0]}})"></image>
-      <view class="caseList-contennt" wx:if="{{caseList.length}}">
-        <view class="caseList-contennt-left" @tap="back">退出登陆</view>
-        <view class="caseList-contennt-right" @tap="toVideo({{caseList[0]}})">连接坐席</view>
-      </view>
+      <!-- <view class="caseList-content-item" wx:if="{{caseList.length}}">
+        <view class="content-item-left">
+          <view class="row line2">
+            <view class="gay w-12">案件号： </view>
+            <view>{{caseList[0].registNo}}</view>
+          </view>
+        </view>
+        <view class="content-item-right">补传单证</view>
+      </view> -->
+      <!-- <image class="content-item-photo" src="../assert/images/photo.png" @tap="toUplad({{caseList[0]}})"></image> -->
       <view class="caseList-content-unload" wx:if="{{!caseList.length}}">
         <view class="content-unload">
           <image class="caseList-content-img" src="../assert/images/unload.png"></image>
           <view class="gay">当前无信息</view>
         </view>
       </view>
-      <view class="caseList-contennt" wx:if="{{!caseList.length}}">
-        <view class="caseList-contennt-left1" @tap="back">退出登陆</view>
+      <view class="caseList-contennt" wx:if="{{isLoad}}">
+        <view class="caseList-contennt-left" @tap="back">退出登陆</view>
+        <view class="caseList-contennt-right" @tap="toVideo({{caseList[0]}})">连接坐席</view>
       </view>
     </view>
     <view class="caseList-content" wx:if="{{isLoad && hisShow}}">
@@ -232,29 +246,37 @@
         <view class="gay">登陆后查看更多信息</view>
       </view>
     </view>
-    <view class="login-footer" wx:if="{{!isLoad}}" @tap="login">登陆</view>
+    <view wx:if="{{!isLoad}}" class="login-footer" @tap="login">登陆</view>
   </view>
 </template>
 
 <script>
-  import wepy from 'wepy'
-  import { connect } from 'wepy-redux'
-  import testMixin from '../mixins/test'
-  import {asyncsession, asyncElevevi, asyncCases, asyncServerInfo, asyncUploads} from '../store/actions'
+  import wepy from 'wepy';
+  import { connect } from 'wepy-redux';
+  import testMixin from '../mixins/test';
+  const socket1 = require('../utils/socket');
+  import Head from '@/components/head';
+  import{ ASYNC_UPLOADMATERICAL_URL, PROCESS_DESCRIPTION_URL, SAVE_SOCKETIO, SAVE_PHONE } from '../store/types';
+  import {asyncsession, asyncElevevi, asyncCases, asyncServerInfo, asyncUploads} from '../store/actions';
 
   @connect({
-    isLoad (state) {
+    isLoad(state) {
       return state.loginPhone.token
     },
-    server (state) {
+    server(state) {
       return state.serverinfo.serverinfo
+    },
+    phone(state) {
+      return state.loginPhone.phone
     }
   }, {
     sessionIn: asyncsession,
     getElevevi: asyncElevevi,
     asyncCases: asyncCases,
     getserverinfo: asyncServerInfo,
-    uploads: asyncUploads
+    uploads: asyncUploads,
+    SAVE_SOCKETIO,
+    SAVE_PHONE
   })
 
   export default class caseList extends wepy.page {
@@ -262,6 +284,7 @@
       navigationBarTitleText: '太平智定损'
     }
     components = {
+      head: Head
     }
 
     mixins = [testMixin]
@@ -271,7 +294,7 @@
       hisShow: false,
       casesList: [],
       caseList: [],
-      socket: ''
+      locationInfo: ''
     }
 
     computed = {
@@ -289,9 +312,66 @@
           url: 'login'
         })
       },
+      isWork() {
+        let hour = new Date().getHours();
+        return hour > 7 && hour < 22
+      },
       toVideo(item) {
+        if (!this.methods.isWork()) {
+          wx.showModal({
+            title: '提示',
+            content: '当前时间为非工作时间，请您在工作时间连接视频。如需帮助，请拨打95589',
+            showCancel: false
+          })
+          return
+        }
+        let that = this;
+        let url = '';
+        if (!this.locationInfo) {
+          wx.getLocation({
+            type: 'wgs84',
+            success: function (res) {
+              that.locationInfo = res;
+              let loc = {
+                lat: that.methods.GPSMAXlength(res.latitude - 0.031),
+                lng: that.methods.GPSMAXlength(res.longitude - 0.039)
+              }
+              url = `video?caseid=${item.caseId}&lat=${loc.lat}&lng=${loc.lng}`
+              wx.navigateTo({
+                url: url
+              })
+            },
+            fail: function (res) {
+              wx.authorize({ scope: "scope.userLocation" })
+            }
+          })
+        } else {
+          let loc = {
+            lat: that.methods.GPSMAXlength(that.locationInfo.latitude + 0.031),
+            lng: that.methods.GPSMAXlength(that.locationInfo.longitude - 0.039)
+          }
+          url = `video?caseid=${item.caseId}&lat=${loc.lat}&lng=${loc.lng}`;
+          wx.navigateTo({
+            url: url
+          })
+        }
+      },
+      GPSMAXlength(val, num) {
+        let max = num || 8
+        try {
+          if (val && val.split('.')[1].length > (max - 1)) {
+            return val.split('.')[0] + '.' + val.split('.')[1].splice(0, max)
+          } else {
+            return val
+          }
+        } catch(e) {
+          return val
+        }
+      },
+      toH5() {
+        let url = encodeURIComponent(PROCESS_DESCRIPTION_URL);
         wx.navigateTo({
-          url: 'video?caseid=' + item.caseId
+          url: 'h5Conteiner?src=' + url
         })
       },
       toMetaricalDetail(item) {
@@ -310,15 +390,27 @@
         })
       },
       back() {
-        wx.navigateBack()
+        if (getCurrentPages().length < 2) {
+          let url = 'login'
+          wx.navigateTo({
+            url: url
+          })
+        } else {
+          wx.navigateBack()
+        }
+        // wx.navigateBack()
       },
       historyCase() {
         this.hisShow = true
         let that = this
-        this.methods.getCasesList().then(res => {
-          that.casesList = that.methods.getTime(res, 'reportTime')
-          that.$apply()
-        })
+        if (that.phone) {
+          this.methods.getCasesList(that.phone).then(res => {
+            if (res.payload && res.payload.length) {
+              that.casesList = that.methods.getTime(res.payload, 'reportTime')
+            }
+            that.$apply()
+          })
+        }
       },
       upload(val) {
         let that = this
@@ -329,7 +421,7 @@
           success (res) {
             let data = {
               picpath: res.tempFilePaths[0],
-              categoryId: 0
+              categoryId: '21'
             }
             let id = val.caseId
             that.methods.postuploads(id, data).then(res => {
@@ -344,9 +436,70 @@
           }
         })
       },
+      uploaduoload(val) {
+        let that = this
+        wx.chooseImage({
+          count: 1,
+          sizeType: ['original', 'compressed'],
+          sourceType: ['album', 'camera'],
+          success (res) {
+            const tempFilePaths = res.tempFilePaths
+            wx.uploadFile({
+              url: ASYNC_UPLOADMATERICAL_URL,
+              filePath: tempFilePaths[0],
+              name: 'file',
+              header: {
+                'Authorization': 'Bearer ' + that.$parent.globalData.token
+              },
+              formData: {
+                'file': tempFilePaths[0]
+              },
+              success (res) {
+                if (res && res.data) {
+                  let a = JSON.parse(res.data)
+                  let data = {
+                    categoryId: '21',
+                    picpath: a.path
+                  }
+                  let id = val.caseId
+                  that.methods.postuploads(id, data).then(res => {
+                    if (res.attachmentPath) {
+                      wx.showToast({
+                        title: '上传成功',
+                        icon: 'none',
+                        duration: 1500
+                      })
+                    }
+                  })
+                } else {
+                  wx.showToast({
+                    title: '上传失败',
+                    icon: 'none',
+                    duration: 1500
+                  })
+                }
+              },
+              fail(e) {
+                wx.showToast({
+                  title: '上传失败',
+                  icon: 'none',
+                  duration: 1500
+                })
+              }
+            })
+          }
+        })
+      },
       sesssin() {
         this.hisShow = false
-        this.methods.sessin1()
+        if (this.isLoad) {
+          this.methods.getcase().then(res => {
+            if (res.length) {
+              this.caseList = this.methods.getTime(res)
+              this.$apply()
+            }
+          })
+        }
       },
       async sessin1(val) {
         this.hisShow = false
@@ -360,15 +513,16 @@
         this.hisShow = false
         let a = await this.sessionIn()
         if (a.payload.caseId) {
-          console.log(this)
           this.getcase(a.payload.caseId)
         }
       },
       async getCasesList(val) {
         this.hisShow = false
-        let a = await this.asyncCases()
-        if (a.payload) {
-          return a.payload
+        let a = await this.asyncCases(val)
+        if (a.payload && typeof a.payload == 'object') {
+          return a
+        } else {
+          return []
         }
       },
       // 获取当前案件资料列表
@@ -387,26 +541,32 @@
         }
       },
       async postuploads(id, val) {
+        console.log(val)
         let a = await this.uploads(id, val)
         if (a.payload) {
-          console.log(a)
-          debugger
           return a.payload
         } else {
           return []
         }
       },
+      addZero(val) {
+        if (val < 10) {
+          return '0' + val;
+        } else {
+          return val;
+        }
+      },
       getTime(val, type) {
-        if (val) {
+        if (val.length) {
           let value = val
           value.forEach(item => {
             let time = new Date(item[type] || item.createdOn)
             let year = time.getFullYear()
-            let mouth = time.getMonth() - 1
-            let day = time.getDate()
-            let hour = time.getHours()
-            let second = time.getSeconds()
-            let mun = time.getMinutes()
+            let mouth = this.addZero(time.getMonth() - 1)
+            let day = this.addZero(time.getDate())
+            let hour = this.addZero(time.getHours())
+            let second = this.addZero(time.getSeconds())
+            let mun = this.addZero(time.getMinutes())
             let date = `${year}-${mouth}-${day} ${hour}:${mun}:${second}`
             item.createdOn = date
           })
@@ -416,17 +576,21 @@
         }
       }
     }
-    onShow() {
-      this.methods.getcase().then(res => {
-        if (res && !res.statusCode) {
-          this.caseList = this.methods.getTime(res)
-          this.$apply()
-        }
-      })
-    }
     onLoad() {
-      console.log(this)
+      if (getCurrentPages().length < 2) {
+        this.methods[SAVE_PHONE]('')
+      }
+      if(this.isLoad) {
+        this.methods.getcase().then(res => {
+          if (res.length) {
+            this.caseList = this.methods.getTime(res)
+            this.$apply()
+          }
+        })
+      }
       this.methods.getServerInfo()
+    }
+    onShow() {
     }
   }
 </script>

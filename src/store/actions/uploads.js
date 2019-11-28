@@ -4,9 +4,6 @@ import wepy from 'wepy'
 import { createAction } from 'redux-actions'
 let BASE_URL1 = BASE_URL
 export const asyncUploads = createAction(ASYNC_UPLOADS, (caseid, data) => {
-  console.log(data)
-  console.log(caseid)
-  debugger
   return new Promise((resolve, reject) => {
     let url = BASE_URL1 + ASYNC_UPLOADS_URL + caseid
     try {

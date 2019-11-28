@@ -4,9 +4,9 @@ import { ASYNC_CASES } from '../types'
 export default handleActions({
   [ASYNC_CASES] (state, action) {
     return Object.assign({}, ...state, {
-      session: action.payload
+      cases: action.payload
     })
   }
 }, {
-  session: ''
+  cases: ''
 })

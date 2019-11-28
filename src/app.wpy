@@ -77,18 +77,26 @@ export default class extends wepy.app {
       'pages/caseList', // 案件列表
       'pages/login', // 登陆页
       // 'pages/index', // demo页
-      'pages/description',  // 流程页
+      // 'pages/description',  // 流程页
       'pages/metaricalDetail', // 案件详情
       'pages/showMetarical', // 案件详情
       'pages/upload', // 上传页
-      'pages/baseMban', // 基本模版页
+      'pages/sign', // 上传页
+      // 'pages/baseMban', // 基本模版页h5Conteiner
+      'pages/h5Conteiner',
       'pages/video' // 视屏页
     ],
+    permission: {
+      "scope.userLocation": {
+        "desc": "请授权经纬度" // 高速公路行驶持续后台定位
+      }
+    },
     window: {
       backgroundTextStyle: 'light',
       navigationBarBackgroundColor: '#fff',
       navigationBarTitleText: '太平智定损',
-      navigationBarTextStyle: 'black'
+      navigationBarTextStyle: 'black',
+      navigationStyle: 'custom'
     }
   }
 
@@ -103,10 +111,47 @@ export default class extends wepy.app {
   //   super()
   //   // this.use('requestfix')
   // }
-
-  onLaunch() {
-    // this.testAsync()
+  onHide(){
+      let pages = getCurrentPages();
+      if(pages['0'].route !== 'pages/caseList'){
+        wx.redirectTo({
+          url:'caseList'
+        })
+    }
+}
+  onLaunch () {
     Utils.checkSystemInfo(this)
+    if (wx.canIUse('getUpdateManager')) {
+      const updateManager = wx.getUpdateManager()
+      updateManager.onCheckForUpdate(function (res) {
+        console.log('onCheckForUpdate====', res)
+        // 请求完新版本信息的回调
+        if (res.hasUpdate) {
+          console.log('res.hasUpdate====')
+          updateManager.onUpdateReady(function () {
+            wx.showModal({
+              title: '更新提示',
+              content: '新版本已经准备好，是否重启应用？',
+              success: function (res) {
+                console.log('success====', res)
+                // res: {errMsg: "showModal: ok", cancel: false, confirm: true}
+                if (res.confirm) {
+                  // 新的版本已经下载好，调用 applyUpdate 应用新版本并重启
+                  updateManager.applyUpdate()
+                }
+              }
+            })
+          })
+          updateManager.onUpdateFailed(function () {
+            // 新的版本下载失败
+            wx.showModal({
+              title: '已经有新版本了哟~',
+              content: '新版本已经上线啦~，请您删除当前小程序，重新搜索打开哟~'
+            })
+          })
+        }
+      })
+    }
   }
 
   sleep (s) {
@@ -122,6 +167,10 @@ export default class extends wepy.app {
     console.log(data)
   }
   onLoad() {
+    wx.onMemoryWarning(function(res) {
+      console.log('onMemoryWarningReceive')
+      wx.setStorageSync('onMemoryWarningReceive', JSON.stringify(res));
+    })
     // this.createConnect()
   }
   // createConnect() {

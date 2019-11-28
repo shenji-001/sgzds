@@ -1,19 +1,31 @@
 <style lang="less">
+.wait-list{
+   position: absolute;
+    bottom:16rpx;
+    width:100%;
+    left:0;
+    text-align: center;
+    color:#fff;
+    font-size: 16rpx;
+}
   .image-list{
     position: absolute;
-    bottom:36rpx;
-    left:60rpx;
+    bottom:10rpx;
+    right:30rpx;
     display: flex;
+    z-index: 11;
     align-items: center;
     .p-1{
-      width: 98.83rpx;
-      height: 98.83rpx;
+      width: 45rpx;
+      height: 45rpx;
+      z-index: 12;
+      margin-right: 15rpx;
     }
     .p-2{
       border: 2rpx solid #fff;
       position: relative;
-      width: 62rpx;
-      height: 62rpx;
+      width: 33rpx;
+      height: 33rpx;
       border-radius: 50%;
       margin-right: 15rpx;
       .p-2-1{
@@ -26,8 +38,8 @@
       }
     }
     .p-3{
-      width: 62rpx;
-      height: 62rpx;
+      width: 45rpx;
+      height: 45rpx;
     }
   }
   page {
@@ -154,6 +166,85 @@
     flex-direction: column;
     align-items: center;
   }
+  .matercal{
+    width: 60%;
+    height: 80%;
+    position: absolute;
+    top: 50%;
+    left:50%;
+    z-index:888;
+    transform: translate(-50%,-50%);
+    background: #fff;
+    border-radius: 10rpx;
+    .matercal-head{
+      width: 100%;
+      background: #0291bd;
+      color: #fff;
+      font-size: 17rpx;
+      height:50rpx;
+      line-height: 50rpx;
+      text-align: center;
+    }
+    .matercal-content{
+      color:#b7374e;
+      padding: 10rpx 15rpx;
+      font-size: 13rpx;
+    }
+    .right{
+      margin-right: 20rpx;
+    }
+    .matercal-foot{
+      font-size: 15rpx;
+      display: flex;
+      position: absolute;
+      height:30rpx;
+      line-height:30rpx;
+      bottom: 16rpx;
+      right:16rpx;
+      flex-direction: row-reverse;
+      color:#3a9051;
+    }
+  }
+  .sign{
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top:0;
+    z-index: 888;
+    left:0;
+}
+.content1 {
+    width: 100%;
+    height: 100vh
+}
+.firstCanvas {
+    background-color: #fff;
+    width: 100%;
+    height: 80vh
+}
+.sign-foot{
+  width: 100%;
+  background: #cd3333;
+  display: flex;
+  height:20vh;
+  line-height:20vh;
+  font-size: 26rpx;
+}
+.botton {
+    width: 100%;
+    height:20vh;
+    line-height:20vh;
+    text-align:center;
+    color: #fff;
+  }
+  .show-pic-image{
+    width: 100rpx;
+    height: 75rpx;
+    position:fixed;
+    top: 0;
+    right: 0;
+    z-index: 100;
+  }
 </style>
 <template>
   <view>
@@ -166,8 +257,8 @@
         <block wx:for="{{media}}" wx:key="key">
           <agora-pusher wx:if="{{item.type === 0 && !item.holding}}" id="rtc-pusher" x="{{item.left}}" y="{{item.top}}" width="{{item.width}}" height="{{item.height}}" url="{{item.url}}" muted="{{muted}}" beauty="{{beauty}}" debug="{{debug}}" bindpushfailed="onPusherFailed">
           </agora-pusher>
-          <!--<agora-player wx:if="{{item.type === 1 && !item.holding}}" id="rtc-player-{{item.uid}}" uid="{{item.uid}}" x="{{item.left}}" y="{{item.top}}" width="{{item.width}}" height="{{item.height}}" debug="{{debug}}" url="{{item.url}}">-->
-          <!--</agora-player>-->
+          <agora-player style='display:none' wx:if="{{item.type === 1 && !item.holding}}" id="rtc-player-{{item.uid}}" uid="{{item.uid}}" x="{{item.left}}" y="{{item.top}}" width="{{item.width}}" height="{{item.height}}" debug="{{debug}}" url="{{item.url}}">
+          </agora-player>
         </block>
       </view>
       <!--<view class="footer flex-center-column">-->
@@ -180,13 +271,35 @@
         <!--</view>-->
       <!--</view>-->
     <!--</view>-->
-    <view class="image-list">
-      <image class="p-1" @tap="onLeave" src="../assert/images/photo.png"></image>
-      <div class="p-2">
-        <image class="p-2-1" src="../assert/images/lightning.png"></image>
-      </div>
-      <image class="p-3" @tap="onSwitchCamera" src="../assert/images/change.png"></image>
-    </view>
+      <view class="image-list">
+        <image class="p-1" @tap="back()" src="../assert/images/phone.png"></image>
+        <image class="p-1" wx:if='{{!seatInfo}}' @tap="toggle" src="../assert/images/lightning.png"></image>
+        <image class="p-3" wx:if='{{!seatInfo}}' @tap="onSwitchCamera" src="../assert/images/change.png"></image>
+      </view>
+      <view class="wait-list" wx:if='{{seatInfo}}'><view>中国太平工号{{seatInfo.code}}为您服务</view><view>正在为您接入视频，请稍等</view></view>
+      <view class="wait-list" wx:if='{{seatInfo1}}'>坐席工号{{seatInfo1.code}}为您服务</view>
+      <image class='show-pic-image' src="{{showPic}}"></image>
+      <view class='matercal' wx:if='{{boxShow}}'>
+        <view class='matercal-head'>{{caseInfo.title}}</view>
+        <view class='matercal-content'>
+          {{caseInfo.tail}}
+        </view>
+        <view class='matercal-foot'>
+          <view @tap='agree'>同意</view>
+          <view @tap="boxHiden" class='right'>不同意</view>
+        </view>
+      </view>
+      <audio style='display:none' src="{{src}}" id="myAudio" controls loop></audio>
+      <view class='sign' wx:if='{{signShow}}'>
+        <view class='content1'>
+          <canvas class='firstCanvas' canvas-id="firstCanvas" bindtouchmove='move' bindtouchstart='start' bindtouchend='end' bindtouchcancel='cancel' bindlongtap='tap' disable-scroll='true' binderror='error'></canvas>
+          <view class='sign-foot' @tap='saveClick'>
+            <!-- <view class='botton' bindtap='clearClick'>清除</view> -->
+            <view class='botton'>确认签名</view>
+          </view>
+        </view>
+      </view>
+      <canvas hidden="{{true}}" canvas-id='imageCanvas' style='display:none'  disable-scroll='true'></canvas>
     </view>
   </view>
 </template>
@@ -197,15 +310,20 @@
   import testMixin from '../mixins/test'
   const AgoraMiniappSDK = require('../lib/mini-app-sdk-production')
   import { AGORARTC_VENDOR_KEY } from '../config'
-  import { asyncsession, asyncGetGuides } from '../store/actions'
+  import { asyncsession, asyncGetGuides, asyncUploads} from '../store/actions'
+  import { SAVE_SOCKETIO, ASYNC_UPLOADMATERICAL_URL } from '../store/types'
   const Layouter = require('../utils/layout.js')
   const Uploader = require('../utils/uploader.js')
   const Utils = require('../utils/util.js')
   const LogUploader = Uploader.LogUploader
   const LogUploaderTask = Uploader.LogUploaderTask
-  const socket = require('../utils/socket')
-
-  const max_user = 10
+  const socket1 = require('../utils/socket')
+  let socket;
+  let content = null;
+  let touchs = [];
+  let canvasw = 0;
+  let canvash = 0;
+  const max_user = 10;
   @connect({
     num (state) {
       return state.counter.num
@@ -216,9 +334,14 @@
     server (state) {
       return state.serverinfo.serverinfo
     }
+    // socket (state) {
+    //   return state.sessionIn.soketIo
+    // },
   }, {
     asyncsession: asyncsession,
-    asyncGetGuides: asyncGetGuides
+    asyncGetGuides: asyncGetGuides,
+    SAVE_SOCKETIO,
+    uploads: asyncUploads
   })
 
   export default class Video extends wepy.page {
@@ -234,26 +357,51 @@
     }
 
     mixins = [testMixin]
-
     data = {
       media: [],
       muted: false,
       beauty: 0,
       totalUser: 1,
+      audioCtx: '',
+      src: '../assert/ring.ogg',
       debug: false,
+      boxShow: false,
+      showPic: '',
       caseId: '',
-      socket: '',
       InspectorId: '',
       rtcConnected: false,
-      guidePicList: ''
+      guidePicList: '',
+      caseInfo: {},
+      timer: null,
+      seatInfo: '',
+      seatInfo1: '',
+      signShow: false,
+      location: ''
     }
 
-    computed = {
+     computed = {
     }
-
     methods = {
       back() {
         wx.navigateBack()
+        if (socket) {
+          socket.emit('SendMessageToUserById', this.InspectorId, 'DisconnectMe', '')
+          socket.close()
+          socket.disconnect()
+        }
+        socket1.disconnect()
+      },
+      boxHiden() {
+        // this.$wxpage.setData({
+        //   boxShow: false
+        // })
+        this.boxShow = false;
+        this.$apply();
+      },
+      agree() {
+        this.boxShow = false;
+        this.signShow = true;
+        this.$apply();
       },
       /**
        * 摄像头方向切换回调
@@ -264,36 +412,94 @@
         const agoraPusher = this.$wxpage.selectComponent(`#rtc-pusher`);
         agoraPusher && agoraPusher.switchCamera();
       },
-      /**
-       * callback when leave button called
-       */
-      onLeave() {
-        if (!this.leaving) {
-          this.leaving = true
-          this.socket.emit('SendMessageToUserById', this.InspectorId, 'DisconnectMe', '')
-          wx.navigateBack()
+      toggle() {
+        const agoraPusher = this.$wxpage.selectComponent(`#rtc-pusher`);
+        agoraPusher && agoraPusher.toggleTorch();
+      },
+      start: function(event) {
+          // console.log("触摸开始" + event.changedTouches[0].x)
+          // console.log("触摸开始" + event.changedTouches[0].y)
+          //获取触摸开始的 x,y
+          let point = {
+              x: event.changedTouches[0].x,
+              y: event.changedTouches[0].y
+          }
+          touchs.push(point)
+      },
+      // 画布的触摸移动手势响应
+      move: function(e) {
+          let point = {
+              x: e.touches[0].x,
+              y: e.touches[0].y
+          }
+          touchs.push(point)
+          if (touchs.length >= 2) {
+              this.draw(touchs)
+          }
+      },
+      // 画布的触摸取消响应
+      cancel: function(e) {
+          console.log("触摸取消" + e)
+      },
+      // 画布的长按手势响应
+      tap: function(e) {
+          console.log("长按手势" + e)
+      },
+      error: function(e) {
+          console.log("画布触摸错误" + e)
+      },
+      // 画布的触摸移动结束手势响应
+      end: function(e) {
+          console.log("触摸结束" + e)
+          //清空轨迹数组
+          for (let i = 0; i < touchs.length; i++) {
+              touchs.pop()
+          }
+      },
+      async postuploads(caseid, val, that) {
+        let data = {
+          categoryId: that.CategoryId || 0,
+          picpath: val
+        }
+        let a = await this.uploads(caseid, data)
+        if (a.payload) {
+          return a.payload
+        } else {
+          return []
         }
       },
-      // getGuidePic() {
-      // },
-      InspectorIdMethods() {
-      },
-      TakePhotoMethods() {
-      },
-      SeatDisconnectedMethods() {
-      },
-      GuidePicMethods(id) {
+      TakePhotoMethods(caseid, token, that) {
+        const agoraPusher = that.$wxpage.selectComponent(`#rtc-pusher`);
+        agoraPusher && agoraPusher.snapshot()
       }
     }
 
     events = {
     }
+    boxHiden() {
+      this.boxShow = false
+      this.$apply()
+    };
+    onLeave() {
+      // if (!this.leaving) {
+        try {
+          this.leaving = true
+          socket.emit('SendMessageToUserById', this.InspectorId, 'DisconnectMe', '')
+          socket.close()
+          socket.disconnect()
+          socket1.disconnect()
+        } catch(e) {
 
+        }
+        // wx.navigateBack()
+      // }
+    };
     onLoad(option) {
-      this.caseId = option.caseid
       Utils.log(`onLoad`);
+      if (option.lng) {
+        this.location = `${option.lng},${option.lat}`
+      }
       // get channel from page query param
-      this.channel = this.caseId;
       // default role to broadcaster
       this.role = option.role || "broadcaster";
       // get pre-gened uid, this uid will be different every time the app is started
@@ -318,14 +524,26 @@
        */
       if (/^sdktest.*$/.test(this.channel)) {
         this.testEnv = true
-        wx.showModal({
-          title: '提示',
-          content: '您正处于测试环境',
-          showCancel: false
+        wx.showToast({
+          title: '您正处于测试环境',
+          icon: 'success',
+          duration: 2000
         })
       }
+        //获得Canvas的上下文
+        content = wx.createCanvasContext('firstCanvas')
+        //设置线的颜色
+        // content.setStrokeStyle("#00ff00")
+        content.setStrokeStyle("#000")
+        //设置线的宽度
+        content.setLineWidth(5)
+        //设置线两端端点样式更加圆润
+        content.setLineCap('round')
+        //设置两条线连接处更加圆润
+        content.setLineJoin('round')
+        this.caseId = option.caseid || ''
     }
-    onReady () {
+    onReady1 () {
       let channel = this.channel;
       let uid = this.uid;
       Utils.log(`onReady`);
@@ -343,7 +561,6 @@
         Utils.log(`channel: ${channel}, uid: ${uid}`);
         Utils.log(`pushing ${url}`);
         let ts = new Date().getTime();
-
         if (this.isBroadcaster()) {
           // first time init, add pusher media to view
           this.addMedia(0, this.uid, url, {
@@ -351,7 +568,7 @@
           });
         }
       }).catch(e => {
-        Utils.log(`init agora client failed: ${e}`);
+        Utils.log(`init agora client failed: ${JSON.stringify(e)}`);
         wx.showToast({
           title: `客户端初始化失败`,
           icon: 'none',
@@ -364,7 +581,7 @@
      * sync the layout info into each media object
      */
     syncLayout(media) {
-      let sizes = this.layouter.getSize(media.length);
+      let sizes = this.layouter.getSize(1);
       for (let i = 0; i < sizes.length; i++) {
         let size = sizes[i];
         let item = media[i];
@@ -381,7 +598,6 @@
       }
       return media;
     }
-
     /**
      * check if current media list has specified uid & mediaType component
      */
@@ -421,18 +637,18 @@
         });
       } else {
         // player
-        // media.push({
-        //   key: options.key,
-        //   rotation: options.rotation,
-        //   type: mediaType,
-        //   uid: `${uid}`,
-        //   holding: false,
-        //   url: url,
-        //   left: 0,
-        //   top: 0,
-        //   width: 0,
-        //   height: 0
-        // });
+        media.push({
+          key: options.key,
+          rotation: options.rotation,
+          type: mediaType,
+          uid: `${uid}`,
+          holding: false,
+          url: url,
+          left: 0,
+          top: 0,
+          width: 0,
+          height: 0
+        });
       }
 
       media = this.syncLayout(media);
@@ -524,6 +740,7 @@
      * 生命周期函数--监听页面显示
      */
     onShow() {
+      socket = null
       let media = this.media || []
       media.forEach(item => {
         if (item.type === 0) {
@@ -536,13 +753,18 @@
         // }
       })
       this.getGuides()
-      this.createConnect()
+      if (this.audioCtx) {
+        this.audioCtx.pause()
+      }
+      this.sessIn()
     }
 
     /**
      * 生命周期函数--监听页面隐藏
      */
-    onHide() {}
+    onHide() {
+      this.onLeave();
+    }
 
     onError(e) {
       Utils.log(`error: ${JSON.stringify(e)}`);
@@ -557,9 +779,7 @@
       clearTimeout(this.reconnectTimer)
       this.logTimer = null
       this.reconnectTimer = null
-      this.methods.onLeave()
       console.log(this)
-      debugger
       // unlock index page join button
       this.client && this.client.unpublish();
       // unpublish sdk and leave channel
@@ -571,10 +791,14 @@
       //   }
       // }
       this.client && this.client.leave();
-      let pages = this.$wxpage.getCurrentPages();
-      if (pages.length > 1) {
-        let indexPage = pages[0];
-        indexPage.unlockJoin();
+      this.onLeave()
+      try {
+        let pages = getCurrentPages();
+        if (pages.length > 1) {
+          let indexPage = pages[0];
+          indexPage.unlockJoin();
+        }
+      } catch(e) {
       }
     }
 
@@ -727,7 +951,10 @@
       // get window size info from systemInfo
       const systemInfo = this.$parent.globalData.systemInfo;
       // 64 is the height of bottom toolbar
-      this.layouter = new Layouter(systemInfo.windowHeight + 64, systemInfo.windowWidth);
+      try {
+        this.layouter = new Layouter(systemInfo.windowHeight, systemInfo.windowWidth);
+      } catch(e) {
+      }  
     }
 
     /**
@@ -1044,22 +1271,49 @@
      * 连接soketio
      */
     sessIn() {
-      this.methods.asyncsession(this.channel).then(res => {
-        if (res.payload.waitingcount >= 2) {
-          wx.showModal({
-            title: '提示',
-            content: '当前有一人排队等待',
-            showCancel: false
+      if (!this.location) {
+        wx.showModal({
+          title:'未获取到经纬度'
+        })
+        return;
+      }
+      this.createConnect()
+      this.audioCtx = wx.createAudioContext('myAudio')
+      this.audioCtx.play()
+      this.methods.asyncsession(this.location).then(res => {
+        this.channel = res.payload.caseId
+        this.onReady1()
+        if (res.payload.waitingcount < 0) {
+          wx.getStorage({
+            key: 'inspectorId',
+            success (res1) {
+              if (res1.data) {
+                socketm.emit('SendMessageToUserById', res1.data, 'Reconnect', res.payload.caseId);
+              }
+            }
           })
+        }
+        if (res.payload.waitingcount >= 2) {
+          wx.showToast({
+            title: `当前有${res.payload.waitingcount}人排队等待，请耐心等待`,
+            icon: 'warn',
+            duration: 20000
+          })
+          return;
         }
         if (res.payload.message) {
-          wx.showModal({
-            title: '提示',
-            content: res.payload.message,
-            showCancel: false
+          wx.showToast({
+            title: res.payload.message,
+            icon: 'warn',
+            duration: 2000
           })
+          return
         }
       })
+    }
+    updateData(res) {
+      this[res.type] = res.data;
+      this.$apply()
     }
     getGuides() {
       this.methods.asyncGetGuides().then(res => {
@@ -1069,85 +1323,128 @@
       })
     }
     createConnect() {
-      let token = 'Bearer ' + this.token.token
+      let token = this.token
       let that = this
-      socket.connect(token.token, (status, ws) => {
-        that.socket = ws
+      // let socket
+      socket1.connect(token).then(res => {
+        let status = res.status;
+        try {
+          if (status) {
+            socket = res.wx;
+          }
+        } catch(e) {
+          console.log(e)
+        }
         if (status) {
-          debugger
-          // 等待人数
-          that.socket.on('WattingNum', function(e) {
+            // 等待人数
+          socket.on('WattingNum', function(e) {
           })
           // 坐席离开，释放资源，页面返回
-          that.socket.on('Disconnect', function(e) {
-            that.methods.onLeave()
+          socket.on('Disconnect', function(e) {
+            that.methods.back()
           })
           // pingpong连接
-          that.socket.on('Ping', function(e) {
-            console.log(e)
-            // that.socket.emit('Pang')
-            // that.socket.emit('SendMessageToUserById', that.InspectorId, 'Pang', new Date().toString())
-            debugger
+          socket.on('Ping', function(e) {
+            try{
+              if (that.InspectorId) {
+                this.emit('SendMessageToUserById', that.InspectorId, 'Pang', new Date().toString())
+              }
+            } catch(e) {
+              console.log(e)
+            }
           })
           // 坐席通知小程序拍照
-          that.socket.on('TakePhoto', function(e) {
-            console.log(e)
-            that.methods.TakePhotoMethods()
-            debugger
+          socket.on('TakePhoto', function(e) {
+            that.methods.TakePhotoMethods(that.caseId, that.token, that);
           })
           // 获取某事故引导图
-          that.socket.on('GuidePic', function(e) {
-            console.log(e)
-            debugger
+          socket.on('GuidePic', function(e) {
             let pic = that.guidePicList.filter(item => {
               return item.id === e
             })
-            console.log(that.server)
-            debugger
-            that.showPic = pic[0].picPath
-            // let base = that.server +
-            // that.socket.emit('SendMessageToUserById', that.InspectorId, 'NewSign', 'servie-in' + pic.picPath)
-            // that.methods.GuidePicMethods(e)
-            debugger
+            let url = that.server.fileSiteUrl + '/' + pic[0].picPath
+            // that.data.showPic = url
+            that.updateData({
+              type: 'showPic',
+              data: url
+            })
+            setTimeout(() => {
+              that.updateData({
+                type: 'showPic',
+                data: ''
+              })
+            }, 10000)
           })
           // 保存
-          that.socket.on('InspectorId', function(e) {
+          socket.on('InspectorId', function(e) {
+            that.audioCtx.pause()
+            that.updateData({
+              type: 'seatInfo1',
+              data: that.seatInfo
+            })
+            that.updateData({
+              type: 'seatInfo',
+              data: ''
+            })
             that.InspectorId = e
-            console.log(that)
-            console.log(that.rtcConnected)
-            debugger
             if (!that.rtcConnected) {
-              that.rtcConnected = true
-              that.sessIn()
-              that.socket.emit('SendMessageToUserById', that.InspectorId, 'StartPing', new Date().toString())
+              that.rtcConnected = true;
+              if (that.InspectorId) {
+                this.emit('SendMessageToUserById', that.InspectorId, 'StartPing', new Date().toString())
+              }
             }
-            // that.methods.InspectorIdMethods()
-            console.log(e)
-            debugger
+            wx.setStorage({
+              key: "inspectorId",
+              data: that.InspectorId
+            })
           })
           // 坐席离开
-          that.socket.on('SeatDisconnected', function(e) {
-            console.log(e)
-            that.methods.onLeave()
-            // that.socket.emit('SendMessageToUserById', that.InspectorId, 'DisconnectMe', '')
-            debugger
+          socket.on('SeatDisconnected', function(e) {
+            this.emit('SendMessageToUserById', that.InspectorId, 'DisconnectMe', '')
+            that.methods.back()
           })
           // 坐席通知要签名
-          that.socket.on('EvidenceSuggestion', function(e) {
-            console.log(e)
-            // that.methods.onLeave()
-            // that.socket.emit('SendMessageToUserById', that.InspectorId, 'DisconnectMe', '')
-            debugger
+          socket.on('EvidenceSuggestion', function(e) {
+            let msg = JSON.parse(e)
+            that.updateData({
+              type: 'caseInfo',
+              data: msg
+            })
+            that.updateData({
+              type: 'boxShow',
+              data: true
+            })
           })
-          // 展示事故id
-          that.socket.on('CategoryId', function(e) {
-            console.log(e)
-            // that.methods.onLeave()
-            // that.socket.emit('SendMessageToUserById', that.InspectorId, 'DisconnectMe', '')
-            debugger
+          // 坐席信息
+          socket.on('AssignmentResult', function(e) {
+            that.updateData({
+              type: 'seatInfo',
+              data: e
+            })
+          })
+          // 展示上传图片id
+          socket.on('CategoryId', function(e) {
+            that.updateData({
+              type: 'CategoryId',
+              data: e
+            })
           })
         }
       })
+    }
+    draw(touchs){
+        let point1 = touchs[0]
+        let point2 = touchs[1]
+        touchs.shift()
+        content.moveTo(point1.x, point1.y)
+        content.lineTo(point2.x, point2.y)
+        content.stroke()
+        content.draw(true)
+    }
+    clearClick(){
+        //清除画布
+        content.clearRect(0, 0, 1000, 500)
+        content.draw(true)
     }
   }
 </script>

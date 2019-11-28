@@ -1,12 +1,17 @@
 <style lang="less">
+page{
+  background: #f5f5f5;
+  position: relative;
+}
   .metaricalDetail {
     .caseList-content {
       position: absolute;
-      top: 20rpx;
+      top: 60rpx;
       padding-bottom: 200rpx;
       margin: 34rpx 3% 0 3%;
       width: 94%;
       font-size: 28rpx;
+      margin-top: 80px;
     }
     .caseList-content-item {
       margin-bottom: 24rpx;
@@ -35,6 +40,13 @@
       padding-left: 31rpx;
       margin-bottom: 16rpx;
     }
+    .line2{
+      border-left:8rpx solid #2f54eb;
+      height: 38rpx;
+      line-height: 38rpx;
+      padding-top: 2rpx;
+      padding-left: 31rpx;
+    }
     .w-12{
       width: 114rpx;
     }
@@ -62,9 +74,17 @@
       color: #999;
     }
   }
+   .content-item-photo{
+    width: 174rpx;
+    height: 174rpx;
+    position: fixed;
+    right: 0;
+    bottom:188rpx;
+  }
 </style>
 <template>
   <view class="metaricalDetail">
+    <head></head>
     <view class="caseList-content" wx:if="{{caseList.length}}">
       <view class="caseList-content-item" @tap="showMetarical({{item}})" wx:for="{{caseList}}" data-index ='{{index}}' wx:key='index'>
         <view class="content-item-left">
@@ -79,9 +99,18 @@
             <view>{{item.createdOn}}</view>
           </view>
         </view>
-        <view class="content-item-right" wx:if="{{!item.attachmentPath}}">{{item.name}}</view>
-        <view class="content-item-right" wx:if="{{item.attachmentPath}}">补传单证</view>
+        <view class="content-item-right">{{item.name}}</view>
       </view>
+      <image class="content-item-photo" wx:if="{{caseList.length}}" src="../assert/images/photo.png" @tap="toUplad({{caseList[0]}})"></image>
+      <!-- <view class="caseList-content-item" @tap="toUplad({{caseList[0]}})">
+        <view class="content-item-left">
+          <view class="row line2">
+            <view class="gay w-12">案件号： </view>
+            <view>{{caseList[0].registNo}}</view>
+          </view>
+        </view>
+        <view class="content-item-right">补传单证</view>
+      </view> -->
     </view>
     <view class="caseList-content-unload" wx:if="{{!caseList.length}}">
       <view class="content-unload">
@@ -95,6 +124,7 @@
 <script>
   import wepy from 'wepy'
   import { connect } from 'wepy-redux'
+  import Head from '@/components/head';
   import {asyncElevevi} from '../store/actions'
   import testMixin from '../mixins/test'
 
@@ -111,9 +141,7 @@
 
   export default class MetaricalDetail extends wepy.page {
     config = {
-      navigationBarTitleText: '太平智定损'
-    }
-    components = {
+      navigationBarTitleText: '案件列表'
     }
 
     mixins = [testMixin]
@@ -123,14 +151,20 @@
       caseList: []
     }
 
-    computed = {
+    components = {
+      head: Head
     }
 
     methods = {
+      toUplad(item) {
+        let url = 'upload?caseid=' + item.caseId
+        wx.navigateTo({
+          url: url
+        })
+      },
       showMetarical(item) {
         let path = item.attachmentPath || item.clientSignature
         let url = this.server.fileSiteUrl + '/' + path
-        // let url = this.server.fileSiteUrl + '/file/' + path
         wx.previewImage({
           current: url, // 当前显示图片的http链接
           urls: [url] // 需要预览的图片http链接列表

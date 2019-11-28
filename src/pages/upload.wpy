@@ -1,16 +1,21 @@
 <style lang="less">
   .upload{
     /*padding: 0 ;*/
+    margin-top: 80px;
+  }
+  .upload-head-text{
+    width: 100%;
+    text-align: center;
+    margin-top: 50rpx;
+    margin-top: 80px;
+    font-size: 40rpx;
   }
   .upload-head{
     display: flex;
-    width: 120vw;
+    width: 100vw;
     overflow-x: scroll;
     padding-left: 19rpx;
     margin-top:36rpx;
-    .upload-head{
-
-    }
     .upload-head-item{
       position:relative;
       width: 203rpx;
@@ -79,12 +84,19 @@
   }
   .upload-content{
     position:relative;
-    height: 402rpx;
-    width:92vw;
+    display: flex;
+    min-height: 402rpx;
+    max-height: 60vh;
+    max-width: 92vw;
+    align-items: center;
+    flex-direction: column;
+    display:flex;
     margin:36rpx 4vw;
+    // margin-top: 100rpx;
     background: #efefef;
     border:2rpx solid #b2b2b2;
     border-radius:16rpx;
+    margin-top: 25vh;
     .upload-content-center{
       position: absolute;
       top:50%;
@@ -100,10 +112,14 @@
       height: 79.16rpx;
       margin-bottom: 15rpx;
     }
+    .content-center-img1{
+      max-width: 100%;
+      // max-height: 100%;
+    }
   }
   .caseList-contennt{
     position: absolute;
-    bottom:56rpx;
+    bottom:156rpx;
     width: 92vw;
     display:flex;
     margin-left: 4vw;
@@ -156,7 +172,8 @@
 </style>
 <template>
   <view class="upload">
-    <view class="upload-head">
+    <head></head>
+    <!-- <view class="upload-head">
       <view class="upload-head-item" data-index ='{{index}}' @tap="changeChoose({{$event}})" wx:for="{{chooseList}}" wx:key="index">
         <image src='{{item.src}}'></image>
         <view class="upload-head1" wx:if="{{item.show}}">
@@ -173,43 +190,42 @@
         </view>
       </view>
     </view>
-    <view class="tips">示例图
+    <view class="tips" @tap="changeTips">示例图
       <span>
-        <view class="tips-icon" @tap="changeTips">!
+        <view class="tips-icon">!
           <image wx:if="{{tipsShow}}" class="tips-icon-img" src="../assert/images/login-bg.png"></image>
         </view>
       </span>
-    </view>
-    <view class="upload-content" @tap="choose">
+    </view> -->
+    <view class='upload-head-text'> </view>
+    <view class="upload-content" @tap="choose" wx:if='{{!tempFilePaths && !tempFilePaths.tempFilePaths[0]}}'>
       <view class="upload-content-center">
         <image class="content-center-img" src="../assert/images/photo-gay.png"></image>
         <view>点此上传</view>
       </view>
     </view>
-    <view class="caseList-contennt">
-      <view class="caseList-contennt-left">重新上传</view>
-      <view class="caseList-contennt-right">确认</view>
+    <view class="upload-content" @tap='toShowMetarical({{tempFilePaths.tempFilePaths[0]}})' wx:if='{{tempFilePaths && tempFilePaths.tempFilePaths[0]}}'>
+      <image class="content-center-img1" src="{{tempFilePaths.tempFilePaths[0]}}"></image>
     </view>
-    <!--<form bindsubmit="formSubmit">-->
-      <!--<view class="section">-->
-        <!--<input type="file" name="input"/>-->
-      <!--</view>-->
-      <!--<view class="btn-area">-->
-        <!--<button formType="submit">Submit</button>-->
-      <!--</view>-->
-    <!--</form>-->
+    <view class="caseList-contennt">
+      <view class="caseList-contennt-left" @tap='choose'>重新上传</view>
+      <view class="caseList-contennt-right" @tap='sure'>确认</view>
+    </view>
   </view>
 </template>
 
 <script>
   import wepy from 'wepy'
   import { connect } from 'wepy-redux'
+  import Head from '@/components/head';
   import { asyncUpload, asyncUploads } from '../store/actions'
-  import testMixin from '../mixins/test'
-
+  import{ ASYNC_UPLOADMATERICAL_URL } from '../store/types'
   @connect({
-    num (state) {
-      return state.counter.num
+    cases (state) {
+      return state.elecevi.cases
+    },
+    token (state) {
+      return state.loginPhone.token
     }
   }, {
     upload: asyncUpload,
@@ -217,16 +233,17 @@
   })
   export default class BaseMban extends wepy.page {
     config = {
-      navigationBarTitleText: '太平智定损'
+      navigationBarTitleText: '补传单证'
     }
     components = {
+      head: Head
     }
-    mixins = [testMixin]
 
     data = {
       mynum: 20,
       caseid: '',
       tipsShow: false,
+      tempFilePaths: '',
       chooseList: [{
         type: 0,
         src: '../assert/images/update1.png',
@@ -266,6 +283,55 @@
         console.log(this.chooseList)
         this.$apply();
       },
+      sure() {
+        let that = this
+        wx.uploadFile({
+          url: ASYNC_UPLOADMATERICAL_URL,
+          filePath: that.tempFilePaths.tempFilePaths[0],
+          name: 'file',
+          header: {
+            'Authorization': 'Bearer ' + that.token
+          },
+          formData: {
+            'file': that.tempFilePaths.tempFilePaths[0],
+          },
+          success (res) {
+            if (res && res.data) {
+              let a = JSON.parse(res.data)
+              that.methods.postuploads(that.caseid, a.path).then(res => {
+                if (res.attachmentPath) {
+                  wx.showToast({
+                    title: '上传成功',
+                    icon: 'none',
+                    duration: 1500
+                  })
+                }
+              })
+            } else {
+              wx.showToast({
+                title: '上传失败',
+                icon: 'none',
+                duration: 1500
+              })
+            }
+            that.tempFilePaths = null;
+          },
+          fail(e) {
+            wx.showToast({
+              title: '上传失败',
+              icon: 'none',
+              duration: 1500
+            });
+            that.tempFilePaths = null;
+          }
+        })
+      },
+      toShowMetarical(url) {
+        wx.previewImage({
+          current: url, // 当前显示图片的http链接
+          urls: [url] // 需要预览的图片http链接列表
+        })
+      },
       choose() {
         let that = this
         wx.chooseImage({
@@ -273,46 +339,8 @@
           sizeType: ['original', 'compressed'],
           sourceType: ['album', 'camera'],
           success (res) {
-            const tempFilePaths = res.tempFilePaths
-            wx.uploadFile({
-              url: 'https://app-in-zds-internal.yhulian.cn/api/upload',
-              // url: 'http://192.168.16.107:80/api/upload',
-              filePath: tempFilePaths[0],
-              name: 'file',
-              header: {
-                'Authorization': 'Bearer ' + that.$parent.globalData.token
-              },
-              formData: {
-                'file': tempFilePaths[0]
-              },
-              success (res) {
-                if (res && res.data) {
-                  let a = JSON.parse(res.data)
-                  that.methods.postuploads(that.caseid, a.path).then(res => {
-                    if (res.attachmentPath) {
-                      wx.showToast({
-                        title: '上传成功',
-                        icon: 'none',
-                        duration: 1500
-                      })
-                    }
-                  })
-                } else {
-                  wx.showToast({
-                    title: '上传失败',
-                    icon: 'none',
-                    duration: 1500
-                  })
-                }
-              },
-              fail(e) {
-                wx.showToast({
-                  title: '上传失败',
-                  icon: 'none',
-                  duration: 1500
-                })
-              }
-            })
+            that.tempFilePaths = res
+            that.$apply()
           }
         })
       },
@@ -326,11 +354,9 @@
       },
       async postuploads(caseid, val) {
         let data = {
-          categoryId: '0',
+          categoryId: '21',
           picpath: val
         }
-        console.log(this.caseid)
-        debugger
         let a = await this.uploads(caseid, data)
         if (a.payload) {
           return a.payload
@@ -342,7 +368,8 @@
 
     events = {
     }
-
+    onShow() {
+    }
     onLoad(option) {
       this.caseid = option.caseid
     }

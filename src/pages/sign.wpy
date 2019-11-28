@@ -1,0 +1,199 @@
+<template>
+<view class='sign'>
+  <view class='content'>
+    <canvas class='firstCanvas' canvas-id="firstCanvas" bindtouchmove='move' bindtouchstart='start' bindtouchend='end' bindtouchcancel='cancel' bindlongtap='tap' disable-scroll='true' binderror='error'></canvas>
+    <view class='sign-foot'>
+      <!-- <view class='botton' bindtap='clearClick'>清除</view> -->
+      <view class='botton' @tap='saveClick'>确认签名</view>
+    </view>
+  </view>
+</view>
+</template>
+<script>
+import wepy from 'wepy';
+import { connect } from 'wepy-redux'
+import { asyncUpload, asyncUploads } from '../store/actions'
+var content = null;
+var touchs = [];
+var canvasw = 0;
+var canvash = 0;
+@connect({
+}, {
+  upload: asyncUpload,
+  uploads: asyncUploads
+})
+export default class Sign extends wepy.page {
+    config = {
+      pageOrientation: 'landscape'
+    };
+    components = {};
+    data = {
+        signImage: '',
+        caseid: ''
+    };
+    events = {};
+    methods = {
+        start: function(event) {
+            // console.log("触摸开始" + event.changedTouches[0].x)
+            // console.log("触摸开始" + event.changedTouches[0].y)
+            //获取触摸开始的 x,y
+            let point = {
+                x: event.changedTouches[0].x,
+                y: event.changedTouches[0].y
+            }
+            touchs.push(point)
+        },
+        // 画布的触摸移动手势响应
+        move: function(e) {
+            let point = {
+                x: e.touches[0].x,
+                y: e.touches[0].y
+            }
+            touchs.push(point)
+            if (touchs.length >= 2) {
+                this.draw(touchs)
+            }
+        },
+        // 画布的触摸取消响应
+        cancel: function(e) {
+            console.log("触摸取消" + e)
+        },
+        // 画布的长按手势响应
+        tap: function(e) {
+            console.log("长按手势" + e)
+        },
+        error: function(e) {
+            console.log("画布触摸错误" + e)
+        },
+        // 画布的触摸移动结束手势响应
+        end: function(e) {
+            console.log("触摸结束" + e)
+            //清空轨迹数组
+            for (let i = 0; i < touchs.length; i++) {
+                touchs.pop()
+            }
+        },
+        async postuploads(caseid, val) {
+          let data = {
+            categoryId: '0',
+            picpath: val
+          }
+          console.log(this.caseid)
+          debugger
+          let a = await this.uploads(caseid, data)
+          if (a.payload) {
+            return a.payload
+          } else {
+            return []
+          }
+        },
+        saveClick() {
+      var that = this
+      wx.canvasToTempFilePath({
+        canvasId: 'firstCanvas',
+        success: function(res1) {
+          //打印图片路径
+          let tempFilePaths = res1.tempFilePath;
+          wx.uploadFile({
+              url: 'https://app-in-zds-internal.yhulian.cn/api/upload',
+              filePath: tempFilePaths,
+              name: 'file',
+              header: {
+                'Authorization': 'Bearer ' + that.$parent.globalData.token
+              },
+              formData: {
+                'file': tempFilePaths
+              },
+              success(res) {
+                if (res && res.data) {
+                  console.log(res)
+                  debugger
+                  let a = JSON.parse(res.data)
+                  that.methods.postuploads(that.caseid, a.path).then(res => {
+                    if (res.attachmentPath) {
+                      wx.showToast({
+                        title: '上传成功',
+                        icon: 'none',
+                        duration: 1500
+                      })
+                    }
+                  })
+                } else {
+                  wx.showToast({
+                    title: '上传失败',
+                    icon: 'none',
+                    duration: 1500
+                  })
+                }
+              },
+              fail(e) {
+                wx.showToast({
+                  title: '上传失败',
+                  icon: 'none',
+                  duration: 1500
+                })
+              }
+            })
+        }
+      })
+    }
+    };
+    async onShow() {}
+    async onLoad(options) {
+        this.caseid = options.caseid;
+        //获得Canvas的上下文
+        content = wx.createCanvasContext('firstCanvas')
+        //设置线的颜色
+        content.setStrokeStyle("#00ff00")
+        //设置线的宽度
+        content.setLineWidth(5)
+        //设置线两端端点样式更加圆润
+        content.setLineCap('round')
+        //设置两条线连接处更加圆润
+        content.setLineJoin('round')
+    }
+    draw(touchs) {
+        let point1 = touchs[0]
+        let point2 = touchs[1]
+        touchs.shift()
+        content.moveTo(point1.x, point1.y)
+        content.lineTo(point2.x, point2.y)
+        content.stroke()
+        content.draw(true)
+    }
+    clearClick() {
+        //清除画布
+        content.clearRect(0, 0, 1000, 500)
+        content.draw(true)
+    }
+}
+</script>
+<style>
+.sign{
+    width: 100vw;
+    height: 100vh;
+}
+.content {
+    width: 100%;
+    height: 90%;
+}
+.firstCanvas {
+    background-color: #fff;
+    width: 100%;
+    height: 100%;
+}
+.sign-foot{
+  width: 100%;
+  height: 10%;
+  background: #cd3333;
+  display: flex;
+  font-size: 13rpx;
+}
+.botton {
+    width: 100%;
+    height:30rpx;
+    line-height:30rpx;
+    text-align:center;
+    color: #fff;
+  }
+</style>

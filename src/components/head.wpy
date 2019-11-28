@@ -1,0 +1,117 @@
+<style lang="less">
+  // .header{
+  //   height: 80rpx;
+  //   width: 100%;
+  //   display: flex;
+  //   align-items: center;
+  //   text-align: center;
+  //   padding-top: 50rpx;
+  //   background: #fff;
+  //   position: relative;
+  // }
+  // .header-left{
+  //   position: absolute;
+  //   left:10%;
+  //   top: 50%;
+  //   transform: translate(-50%, -50%) rotate(180deg);
+  //   width: 40rpx;
+  //   height: 40rpx;
+  // }
+  // .content{
+  //   width: 100%;
+  //   text-align: center;
+  // }
+  /* 顶部要固定定位   标题要居中   自定义按钮和标题要和右边微信原生的胶囊上下对齐 */
+.nav-wrap {
+  position: fixed;
+  width: 100%;
+  top: 0;
+  background: #fff;
+  color: #000;
+  z-index: 9999999;
+}
+/* 标题要居中 */
+.nav-title {
+  position: absolute;
+  text-align: center;
+  max-width: 400rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  font-size: 36rpx;
+  color: #2c2b2b;
+  // font-weight: 600;
+}
+
+.nav-capsule {
+  display: flex;
+  align-items: center;
+  margin-left: 30rpx;
+  width: 140rpx;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.back-pre, .back-home {
+  width: 32rpx;
+   height: 36rpx;
+  margin-top: 10rpx;
+  padding: 10rpx;
+  transform: rotate(180deg);
+}
+.nav-capsule .back-home {
+  width: 36rpx;
+  height: 40rpx;
+  margin-top: 3rpx;
+}
+</style>
+<template>
+  <view class='nav-wrap' style='height: {{height * 3 + 20}}px;'>
+  <view class='nav-title' style='line-height: {{height* 3 + 44}}px;'>{{title}}</view>
+  <view style='display: flex; justify-content: space-around;flex-direction: column' @tap='back()' wx:if='{{showBack}}'>
+    <view class='nav-capsule' style='height: {{height * 3 + 44}}px;'>
+      <view bindtap='_navback'>
+        <image src='../assert/images/right.png' mode='aspectFill' class='back-pre'></image>
+      </view>
+    </view>
+  </view>
+</view>
+  <!-- <view class="header">
+    <image @tap='back()' class='header-left' src='../assert/images/right.png'></image>
+    <view class='content'>{{title}}</view>
+  </view> -->
+</template>
+<script>
+  import wepy from 'wepy'
+
+  export default class Head extends wepy.component {
+    data = {
+      title: '智定损',
+      height: 20,
+      showBack: false
+    }
+
+    methods = {
+      back() {
+        wx.navigateBack()
+      }
+    }
+    onLaunch() {
+    }
+    onLoad () {
+      try {
+        this.title = this.$parent.config.navigationBarTitleText;
+        this.showBack = getCurrentPages().length > 1;
+        this.height = wepy.$instance.globalData.statusBarHeight;
+        this.$apply()
+      } catch(e) {
+        console.log(e)
+      }
+    }
+  }
+</script>

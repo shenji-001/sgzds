@@ -1,6 +1,7 @@
 <style lang="less">
 .login {
   .login-head{
+    margin-top: 80px;
     position: relative;
   }
   .login-head-bg{
@@ -49,8 +50,8 @@
     position: absolute;
     z-index: 2;
     padding: 24rpx 82rpx;
-    width: 418rpx;
-    top: 55%;
+    width: 315rpx;
+    top: 50%;
     left: 50%;
     border:2rpx solid #e5e5e5;
     border-radius: 8rpx;
@@ -80,6 +81,7 @@
 </style>
 <template>
   <view class='login'>
+    <head :title='title'></head>
     <view class='login-head'>
       <image class='login-head-bg' src='../assert/images/login-bg.png'></image>
       <div class="login-head-bg-bg">
@@ -97,9 +99,9 @@
       <!--</view>-->
     <!--</view>-->
     <view class="login-content2" wx:if="{{!changeShow}}">
-      <input type="text" placeholder-class="placeclass" @input="inputSome('inputinfo')" placeholder="请输入手机号">
+      <input type="number" placeholder-class="placeclass" @input="inputSome('inputinfo')" placeholder="请输入报案手机号">
     </view>
-    <view class="login-footer" @tap="login">登陆</view>
+    <view class="login-footer" @tap="login">确认</view>
   </view>
 </template>
 
@@ -108,30 +110,35 @@
   import { connect } from 'wepy-redux'
   // import {asynclogin} from '../store/actions'
   import {asynclogin, asyncloginphone} from '../store/actions'
-  import { SAVE_TOKEN } from '../store/types'
-
+  import { SAVE_PHONE } from '../store/types'
+  import Head from '@/components/head'
   import testMixin from '../mixins/test'
 
   @connect({
     token (state) {
       return state.loginPhone.token || state.login.token
+    },
+    loginphone(state) {
+      return state.loginPhone
     }
   }, {
     asynlogin: asynclogin,
     asynloginphone: asyncloginphone,
-    SAVE_TOKEN
+    SAVE_PHONE
   })
-  export default class BaseMban extends wepy.page {
+  export default class Login extends wepy.page {
     config = {
-      navigationBarTitleText: '登陆'
+      navigationBarTitleText: '输入报案手机号'
     }
     components = {
+      head: Head
     }
 
     mixins = [testMixin]
 
     data = {
       mynum: 20,
+      title: '输入报案手机号',
       changeShow: false,
       user: '',
       password: '',
@@ -148,8 +155,8 @@
         this.login2(this.inputinfo)
       },
       inputSome(type, e) {
-        this[type] = e.detail.value
-        this.$apply()
+        this[type] = e.detail.value;
+        this.$apply();
       },
       toNext() {
         wx.navigateTo({
@@ -161,6 +168,7 @@
       try {
         let a = await this.methods.asynlogin(val)
         if (a.payload.token) {
+          this.methods[SAVE_PHONE](val)
           this.methods.toNext()
         } else {
           wx.showToast('登陆失败，请确认案件号或手机号码是否正确')
@@ -173,10 +181,11 @@
       try {
         let a = await this.methods.asynloginphone(val)
         if (a.payload.token) {
+          this.methods[SAVE_PHONE](val)
           this.methods.toNext()
         } else {
           wx.showToast({
-            title: '登陆失败，请确认手机号是否正确',
+            title: '查无此案件，请确认该手机号是否为报案手机号',
             icon: 'none',
             duration: 1500
           })
@@ -184,7 +193,7 @@
         }
       } catch (e) {
         wx.showToast({
-          title: '登陆失败，请确认手机号是否正确',
+          title: '查无此案件，请确认该手机号是否为报案手机号',
           icon: 'none',
           duration: 1500
         })

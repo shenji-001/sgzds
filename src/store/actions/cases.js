@@ -14,7 +14,7 @@ export const asyncCases = createAction(ASYNC_CASES, (val) => {
           'content-type': 'application/json' // 默认值
         },
         success (res) {
-          resolve(res)
+          resolve(res.data)
         },
         fail(res) {
           resolve(res)
