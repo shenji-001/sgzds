@@ -56,7 +56,7 @@ const log = (msg, level) => {
   if (level === 'error') {
     console.error(`${time}: ${msg}`)
   } else {
-    console.log(`${time}: ${msg}`)
+    // console.log(`${time}: ${msg}`)
   }
 }
 

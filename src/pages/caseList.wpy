@@ -179,7 +179,7 @@
     <view class="caseList-head">
       <view class="caseList-head-left">
         <view style="margin-right: 48rpx" class="{{ hisShow ? 'gay':'' }}" @tap="sesssin">当前案件</view>
-        <view class="{{ !hisShow ? 'gay':'' }}" @tap="historyCase">历史案件</view>
+        <!-- <view class="{{ !hisShow ? 'gay':'' }}" @tap="historyCase">历史案件</view> -->
       </view>
       <view class="caseList-head-right">
         <image class="caseList-head-file" src="../assert/images/file.png"></image>
@@ -332,9 +332,15 @@
             type: 'wgs84',
             success: function (res) {
               that.locationInfo = res;
+              let lat = that.locationInfo.latitude - 0.0032;
+              let lng = that.locationInfo.longitude + 0.0049;
+              // let lat = that.locationInfo.latitude + 0.0072;
+              // let lng = that.locationInfo.longitude - 0.0045;
+              // let lat = that.locationInfo.latitude;
+              // let lng = that.locationInfo.longitude;
               let loc = {
-                lat: that.methods.GPSMAXlength(res.latitude - 0.031),
-                lng: that.methods.GPSMAXlength(res.longitude - 0.039)
+                lat: that.methods.GPSMAXlength(lat, 8),
+                lng: that.methods.GPSMAXlength(lng, 8)
               }
               url = `video?caseid=${item.caseId}&lat=${loc.lat}&lng=${loc.lng}`
               wx.navigateTo({
@@ -342,13 +348,23 @@
               })
             },
             fail: function (res) {
+              wx.showModal({
+                title: '提示',
+                content: '获取经纬度失败'
+              })
               wx.authorize({ scope: "scope.userLocation" })
             }
           })
         } else {
+          let lat = that.locationInfo.latitude - 0.0032;
+          let lng = that.locationInfo.longitude + 0.0049;
+          // let lat = that.locationInfo.latitude + 0.0072;
+          // let lng = that.locationInfo.longitude - 0.0045;
+          // let lat = that.locationInfo.latitude;
+          // let lng = that.locationInfo.longitude;
           let loc = {
-            lat: that.methods.GPSMAXlength(that.locationInfo.latitude + 0.031),
-            lng: that.methods.GPSMAXlength(that.locationInfo.longitude - 0.039)
+            lat: that.methods.GPSMAXlength(lat, 8),
+            lng: that.methods.GPSMAXlength(lng, 8)
           }
           url = `video?caseid=${item.caseId}&lat=${loc.lat}&lng=${loc.lng}`;
           wx.navigateTo({
@@ -356,15 +372,18 @@
           })
         }
       },
-      GPSMAXlength(val, num) {
-        let max = num || 8
+      GPSMAXlength(val1, num) {
+        let val = val1 + '';
+        let max = num || 8;
+        max -= 1;
         try {
-          if (val && val.split('.')[1].length > (max - 1)) {
-            return val.split('.')[0] + '.' + val.split('.')[1].splice(0, max)
+          if (val && val.split('.')[1].length > max) {
+            return val.split('.')[0] + '.' + val.split('.')[1].substring(0, max)
           } else {
             return val
           }
         } catch(e) {
+          console.log(e);
           return val
         }
       },

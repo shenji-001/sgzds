@@ -37,5 +37,6 @@ export const connect = function (token) {
   })
 }
 export const disconnect = function() {
-  onSocket = null
+  onSocket.disconnect();
+  onSocket = null;
 }

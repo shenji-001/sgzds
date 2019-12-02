@@ -273,8 +273,8 @@
     <!--</view>-->
       <view class="image-list">
         <image class="p-1" @tap="back()" src="../assert/images/phone.png"></image>
-        <image class="p-1" wx:if='{{!seatInfo}}' @tap="toggle" src="../assert/images/lightning.png"></image>
-        <image class="p-3" wx:if='{{!seatInfo}}' @tap="onSwitchCamera" src="../assert/images/change.png"></image>
+        <image class="p-1" wx:if='{{seatInfo1}}' @tap="toggle" src="../assert/images/lightning.png"></image>
+        <image class="p-3" wx:if='{{seatInfo1}}' @tap="onSwitchCamera" src="../assert/images/change.png"></image>
       </view>
       <view class="wait-list" wx:if='{{seatInfo}}'><view>中国太平工号{{seatInfo.code}}为您服务</view><view>正在为您接入视频，请稍等</view></view>
       <view class="wait-list" wx:if='{{seatInfo1}}'>坐席工号{{seatInfo1.code}}为您服务</view>
@@ -363,7 +363,7 @@
       beauty: 0,
       totalUser: 1,
       audioCtx: '',
-      src: '../assert/ring.ogg',
+      src: 'ring.ogg',
       debug: false,
       boxShow: false,
       showPic: '',
@@ -383,10 +383,10 @@
     }
     methods = {
       back() {
-        wx.navigateBack()
+        wx.navigateBack();
         if (socket) {
           socket.emit('SendMessageToUserById', this.InspectorId, 'DisconnectMe', '')
-          socket.close()
+          // socket.emit('SendMessageToUserById', this.InspectorId, 'CancelCall', this.caseId)
           socket.disconnect()
         }
         socket1.disconnect()
@@ -485,9 +485,8 @@
         try {
           this.leaving = true
           socket.emit('SendMessageToUserById', this.InspectorId, 'DisconnectMe', '')
-          socket.close()
           socket.disconnect()
-          socket1.disconnect()
+          this.audioCtx.pause();
         } catch(e) {
 
         }
@@ -735,27 +734,31 @@
         });
       });
     }
-
+    onReady () {
+    }
     /**
      * 生命周期函数--监听页面显示
      */
     onShow() {
       socket = null
-      let media = this.media || []
+      let media = this.media || [];
       media.forEach(item => {
         if (item.type === 0) {
         }
         // let player = this.getPlayerComponent(item.uid);
         // if (!player) {
-          // Utils.log(`player ${item.uid} component no longer exists`, "error");
+        //   Utils.log(`player ${item.uid} component no longer exists`, "error");
         // } else {
         //   player.start();
         // }
       })
-      this.getGuides()
-      if (this.audioCtx) {
-        this.audioCtx.pause()
+      try {
+        this.audioCtx = wx.createAudioContext('myAudio');
+        this.audioCtx.play();
+      } catch(e) {
+        console.log(e);
       }
+      this.getGuides()
       this.sessIn()
     }
 
@@ -763,7 +766,11 @@
      * 生命周期函数--监听页面隐藏
      */
     onHide() {
-      this.onLeave();
+      try {
+        this.onUnload();
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     onError(e) {
@@ -1271,41 +1278,49 @@
      * 连接soketio
      */
     sessIn() {
+      this.onReady1()
       if (!this.location) {
         wx.showModal({
           title:'未获取到经纬度'
         })
         return;
       }
-      this.createConnect()
-      this.audioCtx = wx.createAudioContext('myAudio')
-      this.audioCtx.play()
       this.methods.asyncsession(this.location).then(res => {
-        this.channel = res.payload.caseId
-        this.onReady1()
+        if (!res.payload.caseId) {
+          wx.showModal({
+            title: '提示',
+            content: '连接坐席失败'
+          })
+          // wx.navigateBack();
+          return
+        }
+        this.channel = res.payload.caseId;
         if (res.payload.waitingcount < 0) {
           wx.getStorage({
             key: 'inspectorId',
             success (res1) {
               if (res1.data) {
-                socketm.emit('SendMessageToUserById', res1.data, 'Reconnect', res.payload.caseId);
+                socket.emit('SendMessageToUserById', res1.data, 'Reconnect', res.payload.caseId);
               }
             }
           })
         }
         if (res.payload.waitingcount >= 2) {
-          wx.showToast({
-            title: `当前有${res.payload.waitingcount}人排队等待，请耐心等待`,
-            icon: 'warn',
-            duration: 20000
-          })
+          wx.showModal({
+            title: '提示',
+            content: `当前有${res.payload.waitingcount}人排队等待，请耐心等待`
+          });
           return;
         }
+        try {
+          this.createConnect();
+        } catch(e) {
+          console.log(e);
+        }
         if (res.payload.message) {
-          wx.showToast({
-            title: res.payload.message,
-            icon: 'warn',
-            duration: 2000
+          wx.showModal({
+            title: '提示',
+            content: res.payload.message
           })
           return
         }
@@ -1348,6 +1363,16 @@
             try{
               if (that.InspectorId) {
                 this.emit('SendMessageToUserById', that.InspectorId, 'Pang', new Date().toString())
+              } else {
+                wx.getStorage({
+                  key: 'inspectorId',
+                  success (res1) {
+                    that.InspectorId = res1.data
+                    if (res1.data) {
+                      socket.emit('SendMessageToUserById', res1.data, 'Pang', new Date().toString())
+                    }
+                  }
+                })
               }
             } catch(e) {
               console.log(e)
