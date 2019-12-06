@@ -576,7 +576,7 @@
         }
       },
       getTime(val, type) {
-        if (val.length) {
+        if (val && val.length) {
           let value = val
           value.forEach(item => {
             let time = new Date(item[type] || item.createdOn)
@@ -599,17 +599,30 @@
       if (getCurrentPages().length < 2) {
         this.methods[SAVE_PHONE]('')
       }
+      this.onUnload();
+    }
+    onShow() {
       if(this.isLoad) {
         this.methods.getcase().then(res => {
           if (res.length) {
-            this.caseList = this.methods.getTime(res)
-            this.$apply()
+            this.caseList = this.methods.getTime(res);
+            this.$apply();
           }
-        })
+        });
       }
       this.methods.getServerInfo()
     }
-    onShow() {
+    onHide() {
+      try {
+        this.onUnload();
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    onUnload() {
+      this.caseList = '';
+      this.methods[SAVE_PHONE]('')
+      this.$apply();
     }
   }
 </script>

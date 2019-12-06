@@ -310,8 +310,8 @@
   import testMixin from '../mixins/test'
   const AgoraMiniappSDK = require('../lib/mini-app-sdk-production')
   import { AGORARTC_VENDOR_KEY } from '../config'
-  import { asyncsession, asyncGetGuides, asyncUploads} from '../store/actions'
-  import { SAVE_SOCKETIO, ASYNC_UPLOADMATERICAL_URL } from '../store/types'
+  import { asyncsession, asyncGetGuides, asyncUploads, asyncRTClog} from '../store/actions'
+  import { SAVE_SOCKETIO } from '../store/types'
   const Layouter = require('../utils/layout.js')
   const Uploader = require('../utils/uploader.js')
   const Utils = require('../utils/util.js')
@@ -321,8 +321,7 @@
   let socket;
   let content = null;
   let touchs = [];
-  let canvasw = 0;
-  let canvash = 0;
+  let failedNum = 0;
   const max_user = 10;
   @connect({
     num (state) {
@@ -341,7 +340,8 @@
     asyncsession: asyncsession,
     asyncGetGuides: asyncGetGuides,
     SAVE_SOCKETIO,
-    uploads: asyncUploads
+    uploads: asyncUploads,
+    asyncRTClog: asyncRTClog
   })
 
   export default class Video extends wepy.page {
@@ -540,7 +540,8 @@
         content.setLineCap('round')
         //设置两条线连接处更加圆润
         content.setLineJoin('round')
-        this.caseId = option.caseid || ''
+        this.caseId = option.caseid || '';
+        this.channel = option.caseid || ''
     }
     onReady1 () {
       let channel = this.channel;
@@ -759,7 +760,12 @@
         console.log(e);
       }
       this.getGuides()
-      this.sessIn()
+      this.onReady1();
+      try {
+          this.createConnect();
+        } catch(e) {
+          console.log(e);
+        }
     }
 
     /**
@@ -786,7 +792,6 @@
       clearTimeout(this.reconnectTimer)
       this.logTimer = null
       this.reconnectTimer = null
-      console.log(this)
       // unlock index page join button
       this.client && this.client.unpublish();
       // unpublish sdk and leave channel
@@ -961,13 +966,14 @@
       try {
         this.layouter = new Layouter(systemInfo.windowHeight, systemInfo.windowWidth);
       } catch(e) {
-      }  
+      }
     }
 
     /**
      * 初始化sdk推流
      */
     initAgoraChannel(uid, channel) {
+      let that = this;
       return new Promise((resolve, reject) => {
         let client = {}
         if (this.testEnv) {
@@ -991,11 +997,13 @@
           // pass key instead of undefined if certificate is enabled
           client.join(undefined, channel, uid, () => {
             Utils.log(`client join channel success`);
+            that.joinlog();
             // and get my stream publish url
             if (this.isBroadcaster()) {
               client.publish(url => {
                 Utils.log(`client publish success`);
                 resolve(url);
+                that.publishlog();
               }, e => {
                 Utils.log(`client publish failed: ${e.code} ${e.reason}`);
                 reject(e)
@@ -1167,24 +1175,6 @@
      * 注册stream事件
      */
     subscribeEvents(client) {
-      /**
-       * sometimes the video could be rotated
-       * this event will be fired with ratotion
-       * angle so that we can rotate the video
-       * NOTE video only supportes vertical or horizontal
-       * in case of 270 degrees, the video could be
-       * up side down
-       */
-      // client.on("video-rotation", (e) => {
-      //   Utils.log(`video rotated: ${e.rotation} ${e.uid}`)
-      //   setTimeout(() => {
-      //     const player = this.getPlayerComponent(e.uid);
-      //     player && player.rotate(e.rotation);
-      //   }, 1000);
-      // });
-      /**
-       * fired when new stream join the channel
-       */
       client.on("stream-added", e => {
         let uid = e.uid;
         const ts = new Date().getTime();
@@ -1244,6 +1234,7 @@
         let code = errObj.code || 0;
         let reason = errObj.reason || "";
         Utils.log(`error: ${code}, reason: ${reason}`);
+
         let ts = new Date().getTime();
         if (code === 501 || code === 904) {
           this.reconnect();
@@ -1274,11 +1265,64 @@
         }
       });
     }
+    RTClog(val) {
+      let data = {
+        flag: true
+      }
+      if (val) {
+        data.flag = false
+      }
+      try {
+        this.methods.asyncRTClog(data);
+      } catch(e) {
+        console.log(e)
+        debugger;
+      }
+    }
+    joinChannelMessage(val) {
+      console.log(this)
+      debugger;
+      let caseId = this.caseId || '';
+      let data = {
+          flag: true
+        }
+      if (socket) {
+        if (val) {
+          data.flag = false;
+          data.failedNum = val
+        }
+        socket.emit('SendMessageToUserById', caseId, 'JoinChannel', JSON.stringify(data))
+      }
+    }
+    pushlishMessage(val) {
+      let data = {
+          flag: val ? false : true,
+          log: val ? '推送失败' : '推送成功',
+          deviceType: 'miniApp',
+          caseId: this.caseId,
+          InspectorId: this.InspectorId
+        }
+      if (socket) {
+        if (val) {
+          data.flag = false;
+          data.failedNum = val
+        }
+        socket.emit('SendMessageToUserById', data.InspectorId, 'PushlishStream', JSON.stringify(data))
+      }
+    }
+    joinlog(val) {
+      this.joinChannelMessage(val);
+       this.RTClog(val);
+    }
+    publishlog(val) {
+      this.pushlishMessage(val);
+      this.RTClog(val);
+    }
     /**
      * 连接soketio
      */
     sessIn() {
-      this.onReady1()
+      let that = this;
       if (!this.location) {
         wx.showModal({
           title:'未获取到经纬度'
@@ -1294,14 +1338,25 @@
           // wx.navigateBack();
           return
         }
-        this.channel = res.payload.caseId;
         if (res.payload.waitingcount < 0) {
+          debugger;
           wx.getStorage({
             key: 'inspectorId',
             success (res1) {
               if (res1.data) {
                 socket.emit('SendMessageToUserById', res1.data, 'Reconnect', res.payload.caseId);
               }
+            }
+          })
+          wx.getStorage({
+            key: 'seatInfo',
+            success (res1) {
+              that.updateData({
+                type: 'seatInfo1',
+                data: JSON.parse(res1.data)
+              })
+            },
+            fail(e) {
             }
           })
         }
@@ -1311,11 +1366,6 @@
             content: `当前有${res.payload.waitingcount}人排队等待，请耐心等待`
           });
           return;
-        }
-        try {
-          this.createConnect();
-        } catch(e) {
-          console.log(e);
         }
         if (res.payload.message) {
           wx.showModal({
@@ -1343,14 +1393,9 @@
       // let socket
       socket1.connect(token).then(res => {
         let status = res.status;
-        try {
-          if (status) {
-            socket = res.wx;
-          }
-        } catch(e) {
-          console.log(e)
-        }
         if (status) {
+          socket = res.wx;
+          that.sessIn();
             // 等待人数
           socket.on('WattingNum', function(e) {
           })
@@ -1401,7 +1446,7 @@
             }, 10000)
           })
           // 保存
-          socket.on('InspectorId', function(e) {
+          socket.on('', function(e) {
             that.audioCtx.pause()
             that.updateData({
               type: 'seatInfo1',
@@ -1444,8 +1489,16 @@
           socket.on('AssignmentResult', function(e) {
             that.updateData({
               type: 'seatInfo',
+              data: JSON.parse(e)
+            })
+            wx.setStorage({
+              key: "seatInfo",
               data: e
             })
+          })
+          socket.on('JoinChannel', function(e) {
+            console.log(e);
+            debugger;
           })
           // 展示上传图片id
           socket.on('CategoryId', function(e) {
@@ -1456,20 +1509,6 @@
           })
         }
       })
-    }
-    draw(touchs){
-        let point1 = touchs[0]
-        let point2 = touchs[1]
-        touchs.shift()
-        content.moveTo(point1.x, point1.y)
-        content.lineTo(point2.x, point2.y)
-        content.stroke()
-        content.draw(true)
-    }
-    clearClick(){
-        //清除画布
-        content.clearRect(0, 0, 1000, 500)
-        content.draw(true)
     }
   }
 </script>
