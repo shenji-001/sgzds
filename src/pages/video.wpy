@@ -254,6 +254,8 @@
     </view>
     <view id="main" class="content agora-bg flex-center-column">
       <view id="video-container" class="video-container n{{totalUser}}">
+        <!-- <live-pusher wx:if='{{videoShow}}' style="height:100%; position: absolute; width: 100%;" class="camera" bindstatechange="recorderStateChange" bindnetstatus="recorderNetChange" background-mute="true"
+    max-bitrate="500" min-bitrate="200" enable-camera="{{enable}}" autopush="true" device-position="front"/> -->
         <block wx:for="{{media}}" wx:key="key">
           <agora-pusher wx:if="{{item.type === 0 && !item.holding}}" id="rtc-pusher" x="{{item.left}}" y="{{item.top}}" width="{{item.width}}" height="{{item.height}}" url="{{item.url}}" muted="{{muted}}" beauty="{{beauty}}" debug="{{debug}}" bindpushfailed="onPusherFailed">
           </agora-pusher>
@@ -307,7 +309,6 @@
 <script>
   import wepy from 'wepy'
   import { connect } from 'wepy-redux'
-  import testMixin from '../mixins/test'
   const AgoraMiniappSDK = require('../lib/mini-app-sdk-production')
   import { AGORARTC_VENDOR_KEY } from '../config'
   import { asyncsession, asyncGetGuides, asyncUploads, asyncRTClog} from '../store/actions'
@@ -333,9 +334,6 @@
     server (state) {
       return state.serverinfo.serverinfo
     }
-    // socket (state) {
-    //   return state.sessionIn.soketIo
-    // },
   }, {
     asyncsession: asyncsession,
     asyncGetGuides: asyncGetGuides,
@@ -353,10 +351,6 @@
         'agora-player': '../../components/agora-player/agora-player'
       }
     }
-    components = {
-    }
-
-    mixins = [testMixin]
     data = {
       media: [],
       muted: false,
@@ -376,6 +370,8 @@
       seatInfo: '',
       seatInfo1: '',
       signShow: false,
+      enable: true,
+      videoShow: true,
       location: ''
     }
 
@@ -517,18 +513,6 @@
       wx.setKeepScreenOn({
         keepScreenOn: true
       });
-
-      /**
-       * please remove this part in your production environment
-       */
-      if (/^sdktest.*$/.test(this.channel)) {
-        this.testEnv = true
-        wx.showToast({
-          title: '您正处于测试环境',
-          icon: 'success',
-          duration: 2000
-        })
-      }
         //获得Canvas的上下文
         content = wx.createCanvasContext('firstCanvas')
         //设置线的颜色
@@ -547,15 +531,17 @@
       let channel = this.channel;
       let uid = this.uid;
       Utils.log(`onReady`);
-
+      this.updateData({
+        key: 'videoShow',
+        value: false
+      });
       // schedule log auto update, remove this if this is not needed
       this.logTimer = setInterval(() => {
         this.uploadLogs();
       }, 60 * 60 * 1000);
 
       // init layouter control
-      this.initLayouter()
-
+      this.initLayouter();
       // init agora channel
       this.initAgoraChannel(uid, channel).then(url => {
         Utils.log(`channel: ${channel}, uid: ${uid}`);
@@ -569,11 +555,16 @@
         }
       }).catch(e => {
         Utils.log(`init agora client failed: ${JSON.stringify(e)}`);
-        wx.showToast({
-          title: `客户端初始化失败`,
-          icon: 'none',
-          duration: 5000
-        });
+        // failedNum++;
+        // if (failedNum > 2) {
+        //   return;
+        // }
+        // this.onReady1();
+        // wx.showToast({
+        //   title: `客户端初始化失败`,
+        //   icon: 'none',
+        //   duration: 5000
+        // });
       });
     }
     /**
@@ -607,18 +598,6 @@
         return item.type === mediaType && `${item.uid}` === `${uid}`
       }).length > 0
     }
-
-    /**
-     * add media to view
-     * type: 0 - pusher, 1 - player
-     * *important* here we use ts as key, when the key changes
-     * the media component will be COMPLETELY refreshed
-     * this is useful when your live-player or live-pusher
-     * are in a bad status - say -1307. In this case, update the key
-     * property of media object to fully refresh it. The old media
-     * component life cycle event detached will be called, and
-     * new media component life cycle event ready will then be called
-     */
     addMedia(mediaType, uid, url, options) {
       Utils.log(`add media ${mediaType} ${uid} ${url}`);
       let media = this.data.media || [];
@@ -637,20 +616,19 @@
         });
       } else {
         // player
-        media.push({
-          key: options.key,
-          rotation: options.rotation,
-          type: mediaType,
-          uid: `${uid}`,
-          holding: false,
-          url: url,
-          left: 0,
-          top: 0,
-          width: 0,
-          height: 0
-        });
+        // media.push({
+        //   key: options.key,
+        //   rotation: options.rotation,
+        //   type: mediaType,
+        //   uid: `${uid}`,
+        //   holding: false,
+        //   url: url,
+        //   left: 0,
+        //   top: 0,
+        //   width: 0,
+        //   height: 0
+        // });
       }
-
       media = this.syncLayout(media);
       return this.refreshMedia(media);
     }
@@ -735,24 +713,11 @@
         });
       });
     }
-    onReady () {
-    }
     /**
      * 生命周期函数--监听页面显示
      */
     onShow() {
-      socket = null
-      let media = this.media || [];
-      media.forEach(item => {
-        if (item.type === 0) {
-        }
-        // let player = this.getPlayerComponent(item.uid);
-        // if (!player) {
-        //   Utils.log(`player ${item.uid} component no longer exists`, "error");
-        // } else {
-        //   player.start();
-        // }
-      })
+      socket = null;
       try {
         this.audioCtx = wx.createAudioContext('myAudio');
         this.audioCtx.play();
@@ -794,14 +759,6 @@
       this.reconnectTimer = null
       // unlock index page join button
       this.client && this.client.unpublish();
-      // unpublish sdk and leave channel
-      // if (this.isBroadcaster()) {
-      //   try {
-      //     this.client && this.client.unpublish();
-      //   } catch (e) {
-      //     Utils.log(`unpublish failed ${e}`);
-      //   }
-      // }
       this.client && this.client.leave();
       this.onLeave()
       try {
@@ -975,7 +932,7 @@
     initAgoraChannel(uid, channel) {
       let that = this;
       return new Promise((resolve, reject) => {
-        let client = {}
+        let client = {};
         if (this.testEnv) {
           client = new AgoraMiniappSDK.Client({
             servers: ["wss://miniapp.agoraio.cn/120-131-14-112/api"]
@@ -997,7 +954,6 @@
           // pass key instead of undefined if certificate is enabled
           client.join(undefined, channel, uid, () => {
             Utils.log(`client join channel success`);
-            that.joinlog();
             // and get my stream publish url
             if (this.isBroadcaster()) {
               client.publish(url => {
@@ -1006,17 +962,24 @@
                 that.publishlog();
               }, e => {
                 Utils.log(`client publish failed: ${e.code} ${e.reason}`);
-                reject(e)
+                console.log(e)
+                debugger;
+                that.publishlog(failedNum + '');
+                reject(e);
               });
-            } else {
-              resolve();
             }
+            that.joinlog();
           }, e => {
             Utils.log(`client join channel failed: ${e.code} ${e.reason}`);
+            console.log(e)
+            debugger;
+            that.joinlog(failedNum + '');
             reject(e)
-          })
+          });
         }, e => {
           Utils.log(`client init failed: ${e} ${e.code} ${e.reason}`);
+          console.log(e)
+          debugger;
           reject(e);
         });
       });
@@ -1213,42 +1176,21 @@
           Utils.log(`stream subscribed failed ${e} ${e.code} ${e.reason}`);
         });
       });
-
-      /**
-       * remove stream when it leaves the channel
-       */
       client.on("stream-removed", e => {
         let uid = e.uid;
         Utils.log(`stream ${uid} removed`);
         this.removeMedia(uid);
       });
-
-      /**
-       * when bad thing happens - we recommend you to do a
-       * full reconnect when meeting such error
-       * it's also recommended to wait for few seconds before
-       * reconnect attempt
-       */
       client.on("error", err => {
         let errObj = err || {};
         let code = errObj.code || 0;
         let reason = errObj.reason || "";
         Utils.log(`error: ${code}, reason: ${reason}`);
-
         let ts = new Date().getTime();
         if (code === 501 || code === 904) {
           this.reconnect();
         }
       });
-
-      /**
-       * there are cases when server require you to update
-       * player url, when receiving such event, update url into
-       * corresponding live-player, REMEMBER to update key property
-       * so that live-player is properly refreshed
-       * NOTE you can ignore such event if it's for pusher or happens before
-       * stream-added
-       */
       client.on('update-url', e => {
         Utils.log(`update-url: ${JSON.stringify(e)}`);
         let uid = e.uid;
@@ -1276,22 +1218,25 @@
         this.methods.asyncRTClog(data);
       } catch(e) {
         console.log(e)
-        debugger;
       }
     }
     joinChannelMessage(val) {
-      console.log(this)
-      debugger;
-      let caseId = this.caseId || '';
+      let InspectorId = this.InspectorId || '';
       let data = {
-          flag: true
-        }
+        flag: true,
+        log: "加入频道成功",
+        deviceType: "miniApp"
+      }
       if (socket) {
         if (val) {
-          data.flag = false;
-          data.failedNum = val
+          data = {
+            flag: false,
+            log: "加入频道失败",
+            deviceType: "miniApp",
+            failedNum: val
+          }
         }
-        socket.emit('SendMessageToUserById', caseId, 'JoinChannel', JSON.stringify(data))
+        socket.emit('SendMessageToUserById', InspectorId, 'JoinChannel', JSON.stringify(data))
       }
     }
     pushlishMessage(val) {
@@ -1307,12 +1252,12 @@
           data.flag = false;
           data.failedNum = val
         }
-        socket.emit('SendMessageToUserById', data.InspectorId, 'PushlishStream', JSON.stringify(data))
+        socket.emit('SendMessageToUserById', data.InspectorId, 'PublishStream', JSON.stringify(data))
       }
     }
     joinlog(val) {
       this.joinChannelMessage(val);
-       this.RTClog(val);
+      this.RTClog(val);
     }
     publishlog(val) {
       this.pushlishMessage(val);
@@ -1334,12 +1279,11 @@
           wx.showModal({
             title: '提示',
             content: '连接坐席失败'
-          })
+          });
           // wx.navigateBack();
           return
         }
         if (res.payload.waitingcount < 0) {
-          debugger;
           wx.getStorage({
             key: 'inspectorId',
             success (res1) {
@@ -1353,7 +1297,7 @@
             success (res1) {
               that.updateData({
                 type: 'seatInfo1',
-                data: JSON.parse(res1.data)
+                data: res1.data
               })
             },
             fail(e) {
@@ -1396,9 +1340,6 @@
         if (status) {
           socket = res.wx;
           that.sessIn();
-            // 等待人数
-          socket.on('WattingNum', function(e) {
-          })
           // 坐席离开，释放资源，页面返回
           socket.on('Disconnect', function(e) {
             that.methods.back()
@@ -1446,7 +1387,7 @@
             }, 10000)
           })
           // 保存
-          socket.on('', function(e) {
+          socket.on('InspectorId', function(e) {
             that.audioCtx.pause()
             that.updateData({
               type: 'seatInfo1',
@@ -1456,7 +1397,7 @@
               type: 'seatInfo',
               data: ''
             })
-            that.InspectorId = e
+            that.InspectorId = e;
             if (!that.rtcConnected) {
               that.rtcConnected = true;
               if (that.InspectorId) {
@@ -1475,7 +1416,7 @@
           })
           // 坐席通知要签名
           socket.on('EvidenceSuggestion', function(e) {
-            let msg = JSON.parse(e)
+            let msg = e
             that.updateData({
               type: 'caseInfo',
               data: msg
@@ -1489,7 +1430,7 @@
           socket.on('AssignmentResult', function(e) {
             that.updateData({
               type: 'seatInfo',
-              data: JSON.parse(e)
+              data: e
             })
             wx.setStorage({
               key: "seatInfo",
@@ -1497,8 +1438,51 @@
             })
           })
           socket.on('JoinChannel', function(e) {
-            console.log(e);
-            debugger;
+            if (!e.flag && e.failedNum > 2) {
+              wx.showModal({
+                title: '提示',
+                content: '坐席端加入房间失败，请退出重试',
+                success: (res) => {
+                  if (res.confirm) {
+                    that.onLeave();
+                  } else if (res.cancel) {
+                    console.log('用户点击取消')
+                    that.onLeave();
+                  }
+                }
+              });
+            }
+          })
+          // 展示上传图片id
+          socket.on('PublishStream', function(e) {
+            if (e.checkResult === false) {
+               wx.showModal({
+                title: '提示',
+                content: '坐席端订阅远端流失败，请退出重试',
+                success: (res) => {
+                  if (res.confirm) {
+                    that.onLeave();
+                  } else if (res.cancel) {
+                    console.log('用户点击取消')
+                    that.onLeave();
+                  }
+                }
+              });
+            }
+            if (e.receiceFlag === false) {
+               wx.showModal({
+                title: '提示',
+                content: '进入频道出错，请退出重试',
+                success: (res) => {
+                  if (res.confirm) {
+                    that.onLeave();
+                  } else if (res.cancel) {
+                    console.log('用户点击取消')
+                    that.onLeave();
+                  }
+                }
+              });
+            }
           })
           // 展示上传图片id
           socket.on('CategoryId', function(e) {

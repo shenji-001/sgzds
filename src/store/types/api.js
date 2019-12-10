@@ -13,4 +13,4 @@ export const ASYNC_UPLOADMATERICAL_URL = BASE_URL + '/api/upload'  // 上传图�
 export const PROCESS_DESCRIPTION_URL = 'https://zds-test.etaiping.com/flow.html'  // 流程说明地址
 // export const ASYNC_SOCKETIO_URL = 'https://app-zds-zk.yhulian.cn'  // socketio地址
 export const ASYNC_GUIDEPICS_URL = '/api/guidepics/0'  // socketio地址
-export const ASYNC_RTCURL_URL = '/api/log'  // socketio地址
+export const ASYNC_RTCURL_URL = '/api/elec-evi/'  // socketio地址

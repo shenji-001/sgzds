@@ -253,7 +253,6 @@
 <script>
   import wepy from 'wepy';
   import { connect } from 'wepy-redux';
-  import testMixin from '../mixins/test';
   const socket1 = require('../utils/socket');
   import Head from '@/components/head';
   import{ ASYNC_UPLOADMATERICAL_URL, PROCESS_DESCRIPTION_URL, SAVE_SOCKETIO, SAVE_PHONE } from '../store/types';
@@ -286,8 +285,6 @@
     components = {
       head: Head
     }
-
-    mixins = [testMixin]
 
     data = {
       mynum: 20,

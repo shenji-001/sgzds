@@ -157,46 +157,10 @@
   .gray{
     color: #9c9ad1;
   }
-  /*.border-blue{*/
-    /*border: 1px solid #869aec;*/
-  /*}*/
-  /*.border-green{*/
-    /*border: 1px solid #16e294;*/
-  /*}*/
-  /*.border-orange{*/
-    /*border: 1px solid #869aec;*/
-  /*}*/
-  /*.border-gray{*/
-    /*border: 1px solid #869aec;*/
-  /*}*/
 </style>
 <template>
   <view class="upload">
     <head></head>
-    <!-- <view class="upload-head">
-      <view class="upload-head-item" data-index ='{{index}}' @tap="changeChoose({{$event}})" wx:for="{{chooseList}}" wx:key="index">
-        <image src='{{item.src}}'></image>
-        <view class="upload-head1" wx:if="{{item.show}}">
-          <view class="z-11">未</view>
-          <view class="z-11">上</view>
-          <view class="z-11">传</view>
-          <image class="upload-head1-bg" src='../assert/images/update-bg.png'></image>
-        </view>
-        <view class="upload-head1" wx:if="{{!item.show}}">
-          <view class="z-11 {{item.color}}">已</view>
-          <view class="z-11 {{item.color}}">上</view>
-          <view class="z-11 {{item.color}}">传</view>
-          <image class="upload-head1-bg" src='../assert/images/update-bg.png'></image>
-        </view>
-      </view>
-    </view>
-    <view class="tips" @tap="changeTips">示例图
-      <span>
-        <view class="tips-icon">!
-          <image wx:if="{{tipsShow}}" class="tips-icon-img" src="../assert/images/login-bg.png"></image>
-        </view>
-      </span>
-    </view> -->
     <view class='upload-head-text'> </view>
     <view class="upload-content" @tap="choose" wx:if='{{!tempFilePaths && !tempFilePaths.tempFilePaths[0]}}'>
       <view class="upload-content-center">

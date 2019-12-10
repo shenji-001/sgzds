@@ -126,7 +126,6 @@ page{
   import { connect } from 'wepy-redux'
   import Head from '@/components/head';
   import {asyncElevevi} from '../store/actions'
-  import testMixin from '../mixins/test'
 
   @connect({
     num (state) {
@@ -143,8 +142,6 @@ page{
     config = {
       navigationBarTitleText: '案件列表'
     }
-
-    mixins = [testMixin]
 
     data = {
       mynum: 20,

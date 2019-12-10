@@ -112,7 +112,6 @@
   import {asynclogin, asyncloginphone} from '../store/actions'
   import { SAVE_PHONE } from '../store/types'
   import Head from '@/components/head'
-  import testMixin from '../mixins/test'
 
   @connect({
     token (state) {
@@ -133,8 +132,6 @@
     components = {
       head: Head
     }
-
-    mixins = [testMixin]
 
     data = {
       mynum: 20,
