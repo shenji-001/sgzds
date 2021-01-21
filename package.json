@@ -20,7 +20,7 @@
     "redux": "^3.7.2",
     "redux-actions": "^2.2.1",
     "redux-promise": "^0.5.3",
-    "socket.io": "^2.0.1",
+    "socket.io": "^2.4.0",
     "weapp.socket.io": "^2.0.1",
     "wepy": "^1.7.2",
     "wepy-async-function": "^1.4.4",
